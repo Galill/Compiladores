@@ -16,9 +16,10 @@ struct token
 
 int main(int argc, char const *argv[])
 {
-    std::string line;
-    std::ifstream file;
+    std::string line, fe;
+    std::vector<token> Tokens;
     std::map <std::string, std::string> dicionario;
+    std::ifstream file;
 
     dicionario["+"] = "Soma";
     dicionario["-"] = "Subtracao";
@@ -35,39 +36,30 @@ int main(int argc, char const *argv[])
     }
     
     std::getline(file,line);
-    token Tokens[100];
-    std::string fe;
-    int ContadorToken = 0;
-    for(int i = 0; i < line.size(); ++i){
-      
-        try{
+    int pos;
+    for(int i = 0; i < line.size(); i++){
+        try {
+            pos = i - fe.size();
             std::string s;
             s.push_back(line[i]);
             std::string tipo = dicionario.at(s);
-            //coloca como token qualquer outro tipo que não seja numero
-            // da problema pela natureza do código, já que isso é excutado antes
-            // acaba botando algum parantese ou espaço vazio na frente de um número
-            Tokens[ContadorToken].tipo = tipo;
-            Tokens[ContadorToken].lexema = line[i];
-            Tokens[ContadorToken].posicao = i;
-            ContadorToken++;
             if(fe != ""){
-                //só chega aqui se fe não estiver vazia, logo é um número
-                Tokens[ContadorToken].tipo = "Numero";
-                Tokens[ContadorToken].lexema = fe;
-                Tokens[ContadorToken].posicao = i-fe.size()+1;
-                ContadorToken++;
+                Tokens.push_back({"Numero", fe, pos});  
+                fe = "";
             }
-            fe = "";
-        }
-        catch(const std::out_of_range& e){
-            //só chega aqui se for número 
-            //adiciona o numero para a fe
+
+            if(tipo != "Vazio"){
+                Tokens.push_back({tipo, s, i});
+            }
+
+        } catch (const std::out_of_range& e) {
             fe.push_back(line[i]);
         }
     }
-    for(int i = 0;i<ContadorToken;i++){
-    std::cout << "<"<< Tokens[i].tipo << ", "<<  Tokens[i].lexema << ", " << Tokens[i].posicao << ">" << std::endl;
+
+    for (int i = 0; i < Tokens.size(); i++) {
+        std::cout << "<" << Tokens[i].tipo << ", " << Tokens[i].lexema << ", " << Tokens[i].posicao << ">" << std::endl;
     }
+
     return 0;
 }

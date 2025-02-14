@@ -1,1 +1,1 @@
-Atividades poggers de compiladores :p xD *-*
+Atividades poggers de compiladores :p xD ^-^

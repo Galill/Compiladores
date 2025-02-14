@@ -1,25 +1,23 @@
-//compilador ECI (Expressões )
-#define PATH "teste.ec1"
 #include <iostream>
 #include <fstream>
-#include <ostream>
 #include <string>
 #include <map>
 #include <vector>
+#include <stack>
 
-//teste
+#define PATH "teste.ec1"
 
-struct token
-{
+struct token {
     std::string tipo;
     std::string lexema;
     int posicao;
 };
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {   
+    int pos;
     std::string line, fe;
-    std::vector<token> Tokens;
+    std::vector<token> tokens;
+    std::stack<int> pilha;
     std::map <std::string, std::string> dicionario;
     std::ifstream file;
 
@@ -32,26 +30,38 @@ int main(int argc, char const *argv[])
     dicionario[" "] = "Vazio";
 
     file.open(PATH);
-    if(!file.is_open()){
-        std::cout << "Não foi possivel abrir o arquivo" << std::endl; 
+    if(!file.is_open()) {
+        std::cout << "Nao foi possivel abrir o arquivo" << std::endl; 
         exit(1);
     }
-    
+
     std::getline(file,line);
-    int pos;
-    for(int i = 0; i < line.size(); i++){
+    for(int i = 0; i < line.size(); i++) {
         try {
             pos = i - fe.size();
             std::string s;
             s.push_back(line[i]);
             std::string tipo = dicionario.at(s);
-            if(fe != ""){
-                Tokens.push_back({"Numero", fe, pos});  
+
+            if(tipo == "ParenEsq") {
+                pilha.push(1);
+            }
+
+            if(tipo == "ParenDir") {
+                if(pilha.empty()){
+                    std::cout << "Erro: numero incorreto de parenteses no codigo " << std::endl;
+                    exit(1); 
+                }
+                pilha.pop();
+            }
+
+            if(fe != "") {
+                tokens.push_back({"Numero", fe, pos});  
                 fe = "";
             }
 
-            if(tipo != "Vazio"){
-                Tokens.push_back({tipo, s, i});
+            if(tipo != "Vazio") {
+                tokens.push_back({tipo, s, i});
             }
 
         } catch (const std::out_of_range& e) {
@@ -59,8 +69,13 @@ int main(int argc, char const *argv[])
         }
     }
 
-    for (int i = 0; i < Tokens.size(); i++) {
-        std::cout << "<" << Tokens[i].tipo << ", " << Tokens[i].lexema << ", " << Tokens[i].posicao << ">" << std::endl;
+    if(!pilha.empty()){
+        std::cout << "Erro: numero incorreto de parenteses no codigo " << std::endl;
+        exit(1);
+    }
+
+    for (int i = 0; i < tokens.size(); i++) {
+        std::cout << "<" << tokens[i].tipo << ", " << tokens[i].lexema << ", " << tokens[i].posicao << ">" << std::endl;
     }
 
     return 0;

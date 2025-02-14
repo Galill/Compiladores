@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
     dicionario[")"] = "ParenDir";
     dicionario[" "] = "Vazio";
 
-    file.open("bomba.eci");
+    file.open("bomba.ec1");
     if(!file.is_open()){
         std::cout << "Não foi possivel abrir o arquivo" << std::endl; 
         exit(1);
@@ -51,25 +51,25 @@ int main(int argc, char const *argv[])
         try{
             std::string s;
             s.push_back(line[i]);
-            std::cout << dicionario.at(s) << std::endl;
-            std::cout << fe;
+            std::string tipo = dicionario.at(s);
+            Tokens[ContadorToken].tipo = tipo;
+            Tokens[ContadorToken].lexema = line[i];
+            Tokens[ContadorToken].posicao = i;
+            ContadorToken++;
             if(fe != ""){
                 Tokens[ContadorToken].tipo = "Numero";
                 Tokens[ContadorToken].lexema = fe;
-                Tokens[ContadorToken].posicao = i-1;
+                Tokens[ContadorToken].posicao = i-fe.size()+1;
                 ContadorToken++;
             }
-            
             fe = "";
         }
         catch(const std::out_of_range& e){
             fe.push_back(line[i]);
         }
     }
-    
-    std::cout << Tokens[1].tipo;
-    std::cout << Tokens[1].lexema;
-    std::cout << Tokens[1].posicao;
-    std::cout << line;
+    for(int i = 0;i<ContadorToken;i++){
+    std::cout << "<"<< Tokens[i].tipo << ", "<<  Tokens[i].lexema << ", " << Tokens[i].posicao << ">" << std::endl;
+    }
     return 0;
 }

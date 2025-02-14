@@ -1,5 +1,5 @@
 //compilador ECI (Expressões )
-//#include <stack>
+#define PATH "teste.ec1"
 #include <iostream>
 #include <fstream>
 #include <ostream>
@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
     dicionario[")"] = "ParenDir";
     dicionario[" "] = "Vazio";
 
-    file.open("bomba.ec1");
+    file.open(PATH);
     if(!file.is_open()){
         std::cout << "Não foi possivel abrir o arquivo" << std::endl; 
         exit(1);

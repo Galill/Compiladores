@@ -14,14 +14,6 @@ struct token
     int posicao;
 };
 
-bool is_number(const std::string& s)
-{
-    std::string::const_iterator it = s.begin();
-    while (it != s.end() && std::isdigit(*it)) ++it;
-    return !s.empty() && it == s.end();
-}
-
-
 int main(int argc, char const *argv[])
 {
     std::string line;
@@ -47,16 +39,20 @@ int main(int argc, char const *argv[])
     std::string fe;
     int ContadorToken = 0;
     for(int i = 0; i < line.size(); ++i){
-        
+      
         try{
             std::string s;
             s.push_back(line[i]);
             std::string tipo = dicionario.at(s);
+            //coloca como token qualquer outro tipo que não seja numero
+            // da problema pela natureza do código, já que isso é excutado antes
+            // acaba botando algum parantese ou espaço vazio na frente de um número
             Tokens[ContadorToken].tipo = tipo;
             Tokens[ContadorToken].lexema = line[i];
             Tokens[ContadorToken].posicao = i;
             ContadorToken++;
             if(fe != ""){
+                //só chega aqui se fe não estiver vazia, logo é um número
                 Tokens[ContadorToken].tipo = "Numero";
                 Tokens[ContadorToken].lexema = fe;
                 Tokens[ContadorToken].posicao = i-fe.size()+1;
@@ -65,6 +61,8 @@ int main(int argc, char const *argv[])
             fe = "";
         }
         catch(const std::out_of_range& e){
+            //só chega aqui se for número 
+            //adiciona o numero para a fe
             fe.push_back(line[i]);
         }
     }

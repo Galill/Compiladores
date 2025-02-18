@@ -75,20 +75,9 @@ int main(int argc, char const *argv[]) {
 
 
     ///////////REMENDO? (possivelmente)///////////
-    //REMENDO DMS QUANTO MAIS EU MEXO MAIS DESGOSTO DÁ PQPPPP
-    //ATUALIZAR AS MENSAGENS DE ERRO
-    //ESSES MILHÕES DE PILHAS VÃO REFRESCAR A CABESA DE VCS DE TEORIA E A GENTE VAI CONSEGUIR DEIXAR MENOS BUCHA
 
     //PERCORRE OS TOKENS BUSCANDO ERROS
     for (int i = 0; i < tokens.size(); i++) {
-
-        //PRA NÃO PERMITIR OPERAÇÕES SOZINHAS COMO ENTRADA
-        // if(tokens.size() == 1 && tokens[i].tipo != "Numero"){
-        //     std::cerr << "Erro! Numero incorreto de operacoes no codigo!" << std::endl;
-        //         exit(1);
-        // }
-
-
         /////////TRATAMENTO DE PARENTESES/////////
 
         if(tokens[i].tipo == "ParenEsq") {

@@ -5,8 +5,6 @@
 #include <vector>
 #include <memory>
 
-#define PATH "teste.ec1"
-
 // Estrutura para representar tokens
 struct Token {
     std::string tipo;

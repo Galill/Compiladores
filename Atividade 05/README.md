@@ -1,0 +1,3 @@
+- Use o comando make para compilar o projeto
+- Antes de executar o programa passe como parametros os nomes dos arquivos que serão usado para teste
+- ex : ./main corretas.ec1 erradas.ec1

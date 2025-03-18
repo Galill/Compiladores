@@ -5,6 +5,6 @@
 
 using std::shared_ptr;
 
-int interpreter(shared_ptr<Node> raiz);
+int interpretar(shared_ptr<Node> raiz);
 
 #endif

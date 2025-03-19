@@ -1,7 +1,7 @@
-OBJS	= main.o analisa.o ast_builder.o interpreter.o utils.o
-SOURCE	= main.cpp utils.cpp interpreter.cpp ast_builder.cpp analisa.cpp 
-HEADER	= analisa.h ast_builder.h dicionario.h interpreter.h token.h utils.h
-OUT	= compilador
+OBJS	= main.o analisa.o ast_builder.o interpreter.o utils.o validator.o
+SOURCE	= main.cpp utils.cpp interpreter.cpp ast_builder.cpp analisa.cpp validator.cpp
+HEADER	= analisa.h ast_builder.h dicionario.h interpreter.h token.h utils.h validator.h
+OUT	= compilar
 CC	 = g++
 FLAGS	 = -g -c -Wall
 LFLAGS	 = 

@@ -6,11 +6,11 @@
 #include "../include/utils.h"
 #include "../include/interpreter.h"
 #include "../include/dicionario.h"
+#include "../include/validator.h"
 
 using std::string;
 using std::shared_ptr;
 using std::vector;
-
 
 int main(int argc, char **argv) {
     shared_ptr<Node> ast;
@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
     string line;
     ler_arquivo(argv[1], line);
     tolkenizer(tokens, line, dicionario);
+    validar(tokens);
     ast = analisa(tokens);
 
     return 0;

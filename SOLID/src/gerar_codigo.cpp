@@ -34,30 +34,30 @@ string gerar_codigo(shared_ptr<Node> ast) {
             }
 
             if (!node->esquerda && !node->direita) { 
-                assembly << "    movl $" << node->valor << ", %eax\n";
-                assembly << "    pushl %eax\n";                      
+                assembly << "    movl $" << node->valor << ", %rax\n";
+                assembly << "    pushl %rax\n";                      
                 return;                                              
             }
 
             generate_assembly(node->esquerda);
             generate_assembly(node->direita);
 
-            assembly << "    popl %ebx\n";
-            assembly << "    popl %eax\n";
+            assembly << "    popl %rax\n";
+            assembly << "    popl %rax\n";
 
             if (node->valor == "+") {
-                assembly << "    addl %ebx, %eax\n";
-                assembly << "    pushl %eax\n";
+                assembly << "    addl %rbx, %rax\n";
+                assembly << "    pushl %rax\n";
             } else if (node->valor == "-") {
-                assembly << "    subl %ebx, %eax\n";
-                assembly << "    pushl %eax\n";
+                assembly << "    subl %rbx, %rax\n";
+                assembly << "    pushl %rax\n";
             } else if (node->valor == "*") {
-                assembly << "    imull %ebx, %eax\n";
-                assembly << "    pushl %eax\n";
+                assembly << "    imull %rbx, %rax\n";
+                assembly << "    pushl %rax\n";
             } else if (node->valor == "/") {
                 assembly << "    cdq\n";
-                assembly << "    idivl %ebx\n";
-                assembly << "    pushl %eax\n";
+                assembly << "    idivl %rbx\n";
+                assembly << "    pushl %rax\n";
             }
         };
 

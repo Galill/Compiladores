@@ -63,8 +63,8 @@ string gerar_codigo(shared_ptr<Node> ast) {
 
     generate_assembly(ast);
 
-    assembly << "    popl %eax\n";
-    assembly << "    # Resultado final em %eax\n";
+    assembly << "    popl %rax\n";
+    assembly << "    # Resultado final em %rax\n";
 
     return assembly.str();
 }

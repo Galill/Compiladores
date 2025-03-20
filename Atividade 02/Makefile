@@ -12,4 +12,4 @@ compilador_ci.o: compilador_ci.cpp
 	$(CC) $(FLAGS) compilador_ci.cpp 
 
 clean:
-	rm -f $(OBJS) $(OUT)
+	rm -f $(OBJS)

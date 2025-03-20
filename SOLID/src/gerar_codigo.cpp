@@ -53,12 +53,12 @@ string gerar_codigo(shared_ptr<Node> ast) {
                 assembly << "    sub %rbx, %rax\n";
                 assembly << "    push %rax\n";
             } else if (node->valor == "*") {
-                assembly << "    imul %rbx, %rax\n";
-                assembly << "    push %rax\n";
+                assembly << "    imull %rbx, %rax\n";
+                assembly << "    pushl %rax\n";
             } else if (node->valor == "/") {
                 assembly << "    cdq\n";
-                assembly << "    idiv %rbx\n";
-                assembly << "    push %rax\n";
+                assembly << "    idivl %rbx\n";
+                assembly << "    pushl %rax\n";
             }
         };
 

@@ -34,36 +34,37 @@ string gerar_codigo(shared_ptr<Node> ast) {
             }
 
             if (!node->esquerda && !node->direita) { 
-                assembly << "    movl $" << node->valor << ", %rax\n";
-                assembly << "    pushl %rax\n";                      
+                assembly << "    mov $" << node->valor << ", %rax\n";
+                assembly << "    push %rax\n";                      
                 return;                                              
             }
 
             generate_assembly(node->esquerda);
             generate_assembly(node->direita);
 
-            assembly << "    popl %rax\n";
-            assembly << "    popl %rax\n";
+            assembly << "    pop %rax\n";
+            assembly << "    pop %rax\n";
 
+            // TODO revisar assembly
             if (node->valor == "+") {
-                assembly << "    addl %rbx, %rax\n";
-                assembly << "    pushl %rax\n";
+                assembly << "    add %rbx, %rax\n";
+                assembly << "    push %rax\n";
             } else if (node->valor == "-") {
-                assembly << "    subl %rbx, %rax\n";
-                assembly << "    pushl %rax\n";
+                assembly << "    sub %rbx, %rax\n";
+                assembly << "    push %rax\n";
             } else if (node->valor == "*") {
-                assembly << "    imull %rbx, %rax\n";
-                assembly << "    pushl %rax\n";
+                assembly << "    imul %rbx, %rax\n";
+                assembly << "    push %rax\n";
             } else if (node->valor == "/") {
                 assembly << "    cdq\n";
-                assembly << "    idivl %rbx\n";
-                assembly << "    pushl %rax\n";
+                assembly << "    idiv %rbx\n";
+                assembly << "    push %rax\n";
             }
         };
 
     generate_assembly(ast);
 
-    assembly << "    popl %rax\n";
+    assembly << "    pop %rax\n";
     assembly << "    # Resultado final em %rax\n";
 
     return assembly.str();

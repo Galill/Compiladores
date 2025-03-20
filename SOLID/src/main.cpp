@@ -7,6 +7,7 @@
 #include "../include/interpreter.h"
 #include "../include/dicionario.h"
 #include "../include/validator.h"
+#include "../include/gerar_codigo.h"
 
 using std::string;
 using std::shared_ptr;
@@ -21,7 +22,7 @@ int main(int argc, char **argv) {
     tolkenizer(tokens, line, dicionario);
     validar(tokens);
     ast = analisa(tokens);
-
+    std::cout << gerar_codigo(ast) << std::endl;
     return 0;
 }
 

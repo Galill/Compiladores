@@ -19,7 +19,7 @@ void validar(vector<shared_ptr<Token>> &tokens){
         } else if (token->tipo == "ParenDir"){
             if(pilha.empty()) {
                 std::cout << "Erro: Parenteses de fechamento extra." << std::endl;
-                exit(1);
+                exit(0);
             }
             pilha.pop();
         }
@@ -27,7 +27,10 @@ void validar(vector<shared_ptr<Token>> &tokens){
 
     if (!pilha.empty()) {
         std::cout << "Erro: Parentese de abertura extra." << std::endl;
-        exit(1);
+        exit(0);
     }
 
 };
+
+
+

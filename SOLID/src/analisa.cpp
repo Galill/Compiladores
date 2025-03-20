@@ -20,5 +20,5 @@ shared_ptr<Node> analisa(vector<shared_ptr<Token>> tokens) {
         return ast;
     } catch (const std::runtime_error &e) {
         std::cerr << e.what() << std::endl;
-    }
+    } 
 }

@@ -25,4 +25,4 @@ interpreter.o: interpreter.cpp
 	$(CC) $(FLAGS) interpreter.cpp
 
 clean:
-	rm -f $(OBJS) $(OUT) 
+	rm -f $(OBJS)

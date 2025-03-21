@@ -18,22 +18,30 @@ int main(int argc, char **argv) {
     shared_ptr<Node> ast;
     vector<shared_ptr<Token>> tokens;
     ofstream arquivoSaida("saida.s");
-    string line;
+    vector<string> linhas;
 
     
-    ler_arquivo(argv[1], line);
-    tolkenizer(tokens, line, dicionario);
-    validar(tokens);
-    ast = analisa(tokens);
-    string codigoGerado = gerar_codigo(ast);
-    std::cout << codigoGerado << std::endl;
-
-    if(!arquivoSaida){
-        std::cout << "Não foi possivel gerar arquivo de saida!!\n" << std::endl;
+    ler_arquivo(argv[1], linhas); //carrega o arquivo de entradas corretas
+    for(int i = 0 ;i < linhas.size(); i++){
+        //testa todas as entradas
+        tolkenizer(tokens, linhas[i], dicionario);
+        validar(tokens);
+        ast = analisa(tokens);
+        tokens.clear(); //limpa o vetor de tokens 
+        string codigoGerado = gerar_codigo(ast);
+        std::cout << codigoGerado << std::endl;
     }
-    arquivoSaida << codigoGerado;
-    arquivoSaida.close();
-    std::cout << "Arquivo de saida gerado corretamente!\n" << std::endl;
+
+    linhas.clear();
+    ler_arquivo(argv[1], linhas); //carrega o arquivo de entradas erradas
+    for(int i = 0 ;i < linhas.size(); i++){
+        //testa todas as entradas
+        tolkenizer(tokens, linhas[i], dicionario);
+        validar(tokens);
+        ast = analisa(tokens);
+        tokens.clear();
+    }
+
     return 0;
 }
 

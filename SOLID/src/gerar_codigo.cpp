@@ -60,6 +60,10 @@ string gerar_codigo(shared_ptr<Node> ast) {
         };
 
     generate_assembly(ast);
+    size_t posInsercao = modeloAssembly.find("aqui");
 
-    return assembly.str();
+    if (posInsercao != std::string::npos) {
+        modeloAssembly.replace(posInsercao, 4 ,assembly.str() );
+    }
+    return modeloAssembly;
 }

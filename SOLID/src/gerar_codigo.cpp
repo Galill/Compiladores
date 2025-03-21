@@ -34,37 +34,32 @@ string gerar_codigo(shared_ptr<Node> ast) {
             }
 
             if (!node->esquerda && !node->direita) { 
-                assembly << "    mov $" << node->valor << ", %rax\n";
-                assembly << "    push %rax\n";                      
+                assembly << "   mov $" << node->valor << ", %rax\n";                      
                 return;                                              
             }
 
             generate_assembly(node->esquerda);
+            assembly << "   push %rax\n";
             generate_assembly(node->direita);
 
-            assembly << "    pop %rax\n";
-            assembly << "    pop %rax\n";
-
             if (node->valor == "+") {
-                assembly << "    add %rbx, %rax\n";
-                assembly << "    push %rax\n";
+                assembly << "   pop %rbx\n";
+                assembly << "   add %rbx, %rax\n";
             } else if (node->valor == "-") {
-                assembly << "    sub %rbx, %rax\n";
-                assembly << "    push %rax\n";
+                assembly << "   mov %rax, %rbx\n";
+                assembly << "   pop %rax\n";
+                assembly << "   sub, %rbx, %rax\n";
             } else if (node->valor == "*") {
-                assembly << "    MUL %rbx, %rax\n";
-                assembly << "    push %rax\n";
+                assembly << "   pop %rbx\n";
+                assembly << "   imul %rbx, %rax\n";
             } else if (node->valor == "/") {
-                assembly << "    cdq\n";
-                assembly << "    DIV %rbx\n";
-                assembly << "    push %rax\n";
+                assembly << "   mov %rax, %rbx\n";
+                assembly << "   pop %rax\n";
+                assembly << "   div %rbx, %rax\n";
             }
         };
 
     generate_assembly(ast);
-
-    assembly << "    popl %rax\n";
-    assembly << "    # Resultado final em %rax\n";
 
     return assembly.str();
 }

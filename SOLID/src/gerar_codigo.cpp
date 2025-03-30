@@ -62,7 +62,7 @@ _start:
 )";
 
     size_t posInsercao = modeloAssembly.find("# Código gerado");
-    if (posInsercao != string::npos) {
+    if (posInsercao != std::string::npos) {
         modeloAssembly.replace(posInsercao, 15, assembly.str());
     }
 

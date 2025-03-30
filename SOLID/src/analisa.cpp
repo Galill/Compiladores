@@ -16,9 +16,10 @@ shared_ptr<Node> analisa(vector<shared_ptr<Token>> tokens) {
         std::cout << "Arvore infixa: ";
         imprimirInfixo(ast);
         std::cout << std::endl;
-        std::cout << "Resultado da expressao: " << float(interpretar(ast)) << std::endl;
+        std::cout << "Resultado da expressao: " << interpretar(ast) << std::endl;
         return ast;
     } catch (const std::runtime_error &e) {
         std::cerr << e.what() << std::endl;
-    } 
+        return nullptr;
+    }
 }

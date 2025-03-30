@@ -1,0 +1,4 @@
+- Use o comando make para compilar o projeto
+- Antes de executar o programa passe como parametros os nomes dos arquivos que serão usado para teste
+- Ja forneci arquivos de testes com algumas expressões
+- ex : ./main arquivo.txt arquivo2.txt

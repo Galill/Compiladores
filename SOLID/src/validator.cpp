@@ -10,14 +10,15 @@ using std::shared_ptr;
 using std::stack;
 using std::runtime_error;
 
-void validar(vector<shared_ptr<Token>> &tokens){
+
+void validar(vector<shared_ptr<Token>> &tokens) {
     stack<shared_ptr<Token>> pilha;
 
-    for (const auto&token : tokens){
-        if(token->tipo == "ParenEsq") {
+    for (const auto& token : tokens) {
+        if (token->tipo == "ParenEsq") {
             pilha.push(token);
-        } else if (token->tipo == "ParenDir"){
-            if(pilha.empty()) {
+        } else if (token->tipo == "ParenDir") {
+            if (pilha.empty()) {
                 throw runtime_error("Erro: Parenteses de fechamento extra.");
             }
             pilha.pop();
@@ -27,7 +28,8 @@ void validar(vector<shared_ptr<Token>> &tokens){
     if (!pilha.empty()) {
         throw runtime_error("Erro: Parenteses de abertura extra.");
     }
-};
+}
+
 
 
 

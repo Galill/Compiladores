@@ -16,8 +16,7 @@ struct Node {
     shared_ptr<Node> esquerda;
     shared_ptr<Node> direita;
 
-    Node(string c) : valor(c), esquerda(nullptr), direita(nullptr){}
-
+    Node(string c) : valor(c), esquerda(nullptr), direita(nullptr) {}
 };
 
 // 🌳 Cria a Árvore de Sintaxe Abstrata (AST)
@@ -26,9 +25,9 @@ class ASTBuilder {
         shared_ptr<Node> build(const vector<shared_ptr<Token>> &tokens);
 
     private:
-        shared_ptr<Node> parseExpressao(const vector<shared_ptr<Token>> &tokens, int &pos);        
-
-
+        shared_ptr<Node> parseExpA(const vector<shared_ptr<Token>> &tokens, int &pos);
+        shared_ptr<Node> parseExpM(const vector<shared_ptr<Token>> &tokens, int &pos);
+        shared_ptr<Node> parsePrim(const vector<shared_ptr<Token>> &tokens, int &pos);
 };
 
 #endif // ASTBuilder

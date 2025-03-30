@@ -15,31 +15,38 @@ using std::shared_ptr;
 using std::vector;
 using std::ofstream;
 int main(int argc, char **argv) {
-    shared_ptr<Node> ast;
-    vector<shared_ptr<Token>> tokens;
-    ofstream arquivoSaida("saida.s");
-    vector<string> linhas;
-
-    
-    ler_arquivo(argv[1], linhas); //carrega o arquivo de entradas corretas
-    for(int i = 0 ;i < linhas.size(); i++){
-        //testa todas as entradas
-        tolkenizer(tokens, linhas[i], dicionario);
-        validar(tokens);
-        ast = analisa(tokens);
-        tokens.clear(); //limpa o vetor de tokens 
-        string codigoGerado = gerar_codigo(ast);
-        std::cout << codigoGerado << std::endl;
+    if (argc != 2) {
+        std::cerr << "Uso: " << argv[0] << " <nome_do_arquivo>" << std::endl;
+        return 1;
     }
 
-    linhas.clear();
-    ler_arquivo(argv[1], linhas); //carrega o arquivo de entradas erradas
-    for(int i = 0 ;i < linhas.size(); i++){
-        //testa todas as entradas
-        tolkenizer(tokens, linhas[i], dicionario);
-        validar(tokens);
-        ast = analisa(tokens);
-        tokens.clear();
+    shared_ptr<Node> ast;
+    vector<shared_ptr<Token>> tokens;
+    map<string, string> dicionario = {
+        {"+", "Soma"},
+        {"-", "Subtracao"},
+        {"*", "Multiplicacao"},
+        {"/", "Divisao"},
+        {"(", "ParenEsq"},
+        {")", "ParenDir"}
+    };
+
+    vector<string> linhas;
+    ler_arquivo(argv[1], linhas); //carrega o arquivo de entradas
+
+    for (const string& linha : linhas) {
+        try {
+            tokens.clear();
+            tolkenizer(tokens, linha, dicionario);
+            validar(tokens);
+            ast = analisa(tokens);
+            if (ast) {
+                string codigoGerado = gerar_codigo(ast);
+                //std::cout << "Codigo Assembly Gerado:\n" << codigoGerado << std::endl;
+            }
+        } catch (const std::runtime_error& e) {
+            std::cerr << "Erro na linha \"" << linha << "\": " << e.what() << std::endl;
+        }
     }
 
     return 0;

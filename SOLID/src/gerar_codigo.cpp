@@ -44,8 +44,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
         } else if (node->valor == "/") {
             assembly << "    mov %rax, %rbx\n";
             assembly << "    pop %rax\n";
-            assembly << "    cdq\n"; // Extende %eax para %edx:%eax
-            assembly << "    idiv %rbx\n";
+            assembly << "    div %rbx\n";
         }
     };
 

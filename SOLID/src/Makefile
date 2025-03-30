@@ -1,7 +1,7 @@
 OBJS	= main.o analisa.o ast_builder.o interpreter.o utils.o validator.o gerar_codigo.o
 SOURCE	= main.cpp utils.cpp interpreter.cpp ast_builder.cpp analisa.cpp validator.cpp gerar_codigo.cpp
 HEADER	= analisa.h ast_builder.h dicionario.h interpreter.h token.h utils.h validator.h gerar_codigo.h
-OUT	= compilar
+OUT	= compilador
 CC	 = g++
 FLAGS	 = -g -c -Wall 
 LFLAGS	 = 

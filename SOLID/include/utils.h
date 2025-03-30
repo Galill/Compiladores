@@ -6,13 +6,15 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <fstream>
 
 using std::shared_ptr;
 using std::vector;
 using std::string;
 using std::map;
 
-void ler_arquivo(string filename, string &line);
+
+void ler_arquivo(string file, vector<string> &linhas);
 void imprimirInfixo(shared_ptr<Node> raiz);
 void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, string> dicionario);
 

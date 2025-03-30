@@ -1,22 +1,30 @@
 #include "../include/utils.h"
 #include <fstream>
 #include <cctype>
+#include <stdexcept>
 
 using std::string;
 using std::shared_ptr;
 using std::vector;
 using std::map;
-using std::ifstream;
+using std::fstream;
 using std::getline;
 using std::make_shared;
+using std::runtime_error;
 
-void ler_arquivo(string filename, string &line){
-     ifstream file(filename);
+void ler_arquivo(string filename, vector<string> &linhas){
+     fstream file(filename);
+     string line;
      if (!file) {
         std::cerr << "Erro! Nao foi possivel abrir o arquivo!" << std::endl;
         return;
     }
-    getline(file, line);
+    int i = 0;
+    while(!file.eof()){
+        getline(file,line);
+        linhas.push_back(line);
+        i++;
+    }
     file.close();
     return;
 }
@@ -67,8 +75,7 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
                 token->posicao = static_cast<int>(i);
                 tokens.push_back(token);
             } else {
-                std::cerr << "Erro! Caractere inválido: " << s << std::endl;
-                exit(1);
+                throw runtime_error("Erro: Caractere inválido");
             }
         }
     }

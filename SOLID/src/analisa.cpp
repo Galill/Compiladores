@@ -13,10 +13,7 @@ shared_ptr<Node> analisa(vector<shared_ptr<Token>> tokens) {
     try {
         ASTBuilder builder;
         shared_ptr<Node> ast = builder.build(tokens);
-        std::cout << "Arvore infixa: ";
-        imprimirInfixo(ast);
-        std::cout << std::endl;
-        std::cout << "Resultado da expressao: " << interpretar(ast) << std::endl;
+
         return ast;
     } catch (const std::runtime_error &e) {
         std::cerr << e.what() << std::endl;

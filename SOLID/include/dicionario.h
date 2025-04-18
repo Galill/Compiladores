@@ -15,7 +15,9 @@ const map<string, string> dicionario = {
     {"*", "Multiplicacao"},
     {"/", "Divisao"},
     {"(", "ParenEsq"},
-    {")", "ParenDir"}
+    {")", "ParenDir"},
+    {"=", "Atribuicao"}, // ✅
+    {";", "PontoVirgula"}
 };
 
 #endif

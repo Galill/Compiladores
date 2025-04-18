@@ -29,7 +29,3 @@ void validar(vector<shared_ptr<Token>> &tokens) {
         throw runtime_error("Erro: Parenteses de abertura extra.");
     }
 }
-
-
-
-

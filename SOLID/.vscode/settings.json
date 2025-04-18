@@ -1,5 +1,11 @@
 {
     "files.associations": {
-        "stdexcept": "cpp"
+        "*.sqlbook": "sql",
+        "*.ndjson": "jsonl",
+        "*.dbclient-js": "javascript",
+        "stdexcept": "cpp",
+        "vector": "cpp",
+        "map": "cpp",
+        "memory": "cpp"
     }
 }

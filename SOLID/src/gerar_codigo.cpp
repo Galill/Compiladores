@@ -4,8 +4,8 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
-#include <iostream> // Para depuração
-#include <set> // Para armazenar variáveis declaradas
+#include <iostream> 
+#include <set> 
 
 using std::string;
 using std::shared_ptr;
@@ -26,7 +26,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
     bss << ".section .bss\n";
     code << ".section .text\n.globl _start\n_start:\n";
 
-    set<string> declaredVars; // Keep track of declared variables
+    set<string> declaredVars; 
 
     function<void(shared_ptr<Node>)> gerarExp;
     gerarExp = [&](shared_ptr<Node> node) {
@@ -38,7 +38,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
             if (declaredVars.find(node->valor) == declaredVars.end()) {
                 throw runtime_error("Variável não declarada: " + node->valor);
             }
-            code << "    mov " << node->valor << ", %rax\n"; // Acesso direto agora
+            code << "    mov " << node->valor << ", %rax\n";
         } else if (node->tipo == "Operador") {
             gerarExp(node->esquerda);
             code << "    push %rax\n";
@@ -73,10 +73,10 @@ string gerar_codigo(shared_ptr<Node> ast) {
 
         if (node->tipo == "Declaracao") {
             if (declaredVars.find(node->valor) == declaredVars.end()) {
-                bss << "    .lcomm " << node->valor << ", 8\n"; // Use .lcomm as in the target
+                bss << "    .lcomm " << node->valor << ", 8\n";
                 declaredVars.insert(node->valor);
-                gerarExp(node->esquerda); // Generate code for the initial value
-                code << "    mov %rax, " << node->valor << "\n"; // Initialize directly
+                gerarExp(node->esquerda);
+                code << "    mov %rax, " << node->valor << "\n"; 
             } else {
                 throw runtime_error("Variável já declarada: " + node->valor);
             }
@@ -85,11 +85,11 @@ string gerar_codigo(shared_ptr<Node> ast) {
                 throw runtime_error("Atribuição a variável não declarada: " + node->valor);
             }
             gerarExp(node->esquerda);
-            code << "    mov %rax, " << node->valor << "\n"; // Assign directly
+            code << "    mov %rax, " << node->valor << "\n"; 
         } else if (node->tipo == "If") {
             int id = labelCounter++;
             gerarExp(node->esquerda);
-            code << "    cmp $0, %rax\n    jz Lfalso" << id << "\n"; // Use jz for jump if zero
+            code << "    cmp $0, %rax\n    jz Lfalso" << id << "\n"; 
             for (const auto& cmd : node->filhos[0]->comandos) gerarCmd(cmd);
             if (node->filhos.size() > 1) {
                 code << "    jmp Lfim" << id << "\nLfalso" << id << ":\n";
@@ -97,31 +97,31 @@ string gerar_codigo(shared_ptr<Node> ast) {
                 code << "Lfim" << id << ":\n";
             } else {
                 code << "Lfalso" << id << ":\n";
-                code << "Lfim" << id << ":\n"; // Need an Lfim even without else
+                code << "Lfim" << id << ":\n"; 
             }
         } else if (node->tipo == "While") {
             int id = labelCounter++;
             code << "Linicio" << id << ":\n";
             gerarExp(node->esquerda);
-            code << "    cmp $0, %rax\n    jz Lfim" << id << "\n"; // Use jz
+            code << "    cmp $0, %rax\n    jz Lfim" << id << "\n"; 
             for (const auto& cmd : node->filhos[0]->comandos) gerarCmd(cmd);
             code << "    jmp Linicio" << id << "\nLfim" << id << ":\n";
         }
     };
 
-    // Process declarations first to initialize variables at the start
+   
     for (const auto& decl : ast->filhos) {
         if (decl->tipo == "Declaracao") {
             gerarCmd(decl);
         }
     }
 
-    // Then process the commands in the main block
+    
     for (const auto& cmd : ast->comandos) {
         gerarCmd(cmd);
     }
 
-    gerarExp(ast->esquerda); // expressão final
+    gerarExp(ast->esquerda); 
     code << "    call imprime_num\n    call sair\n";
 
     stringstream final;

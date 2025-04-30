@@ -17,7 +17,7 @@ using std::shared_ptr;
 using std::vector;
 using std::map;
 
-int interpretar(shared_ptr<Node> raiz, const map<string, int>& ambiente); // Declarar função interpretada corretamente
+int interpretar(shared_ptr<Node> raiz, const map<string, int>& ambiente);
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
     };
 
     vector<string> linhas;
-    ler_arquivo(argv[1], linhas); // Lê o arquivo de entrada linha por linha
+    ler_arquivo(argv[1], linhas); 
 
-    // Junta todas as linhas em um só vetor de tokens
+    
     for (const string& linha : linhas) {
         try {
             tolkenizer(tokens, linha, dicionario);
@@ -53,14 +53,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Agora analisa e interpreta a AST
+  
     try {
         ast = analisa(tokens);
         if (ast) {
             map<string, int> ambiente;
 
-
-            // Interpret the entire AST, including declarations and commands
             int resultadoFinal = interpretar(ast, ambiente);
             std::cout << "Resultado da expressão final: " << resultadoFinal << std::endl;
 

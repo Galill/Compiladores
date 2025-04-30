@@ -7,7 +7,7 @@
 using std::string;
 using std::map;
 
-// 📖 Dicionário de Símbolos Matemáticos e suas descrições
+
 
 const map<string, string> dicionario = {
     {"+", "Soma"},
@@ -16,7 +16,7 @@ const map<string, string> dicionario = {
     {"/", "Divisao"},
     {"(", "ParenEsq"},
     {")", "ParenDir"},
-    {"=", "Atribuicao"}, // ✅
+    {"=", "Atribuicao"}, 
     {";", "PontoVirgula"}
 };
 

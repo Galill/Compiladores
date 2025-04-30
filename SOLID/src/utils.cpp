@@ -48,15 +48,11 @@ void imprimirInfixo(shared_ptr<Node> raiz) {
 void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, string> dicionario) {
     int i = 0;
     while (i < line.size()) {
-                // Ignorar espaços em branco
                 if (isspace(line[i])) { i++; continue; }
         
-                // Tratar comentários (opcional)
                 if (line[i] == '/' && i+1 < line.size() && line[i+1] == '/') {
-                    break; // Ignora o resto da linha
+                    break;
                 }
-                
-                // Operadores de dois caracteres (==, <=, >=)
                 if (i+1 < line.size()) {
                     string doisChars = string(1, line[i]) + line[i+1];
                     if (doisChars == "==" || doisChars == "<=" || doisChars == ">=") {
@@ -71,7 +67,6 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
                 }
         if (isspace(line[i])) { i++; continue; }
 
-        // Operadores de dois caracteres
         if (line[i] == '=' && i+1 < line.size() && line[i+1] == '=') {
             auto token = make_shared<Token>();
             token->tipo = "Igualdade";
@@ -82,7 +77,6 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
             continue;
         }
 
-        // Palavras-chave
         if (isalpha(line[i])) {
             string ident;
             while (i < line.size() && isalnum(line[i])) ident += line[i++];
@@ -97,7 +91,6 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
             continue;
         }
 
-        // Números
         if (isdigit(line[i])) {
             string num;
             while (i < line.size() && isdigit(line[i])) num += line[i++];
@@ -109,7 +102,6 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
             continue;
         }
 
-        // Caracteres individuais
         string s(1, line[i]);
         auto token = make_shared<Token>();
         token->lexema = s;

@@ -80,7 +80,8 @@ int interpretar(shared_ptr<Node> raiz, map<string, int>& ambiente) {
         for (auto& cmd : raiz->comandos) {
             interpretar(cmd, ambiente);
         }
-        return interpretar(raiz->esquerda, ambiente); // expressão final
+        return interpretar(raiz->esquerda, ambiente); 
+        
     }
 
     throw runtime_error("Erro: tipo de nó inválido no interpretador: " + raiz->tipo);

@@ -1,28 +1,28 @@
-OBJS	= main.o analisa.o ast_builder.o interpreter.o utils.o validator.o gerar_codigo.o
-SOURCE	= main.cpp utils.cpp interpreter.cpp ast_builder.cpp analisa.cpp validator.cpp gerar_codigo.cpp
-HEADER	= analisa.h ast_builder.h dicionario.h interpreter.h token.h utils.h validator.h gerar_codigo.h
-OUT	= compilador
-CC	 = g++
-FLAGS	 = -g -c -Wall 
-LFLAGS	 = 
+# Variáveis
+CC = g++
+CXXFLAGS = -g -Wall -w  # Flags de compilação
+LFLAGS =              # Flags de link (atualmente vazias)
+OUT = compilador      # Nome do executável
 
-all: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+# Arquivos fonte, objetos e cabeçalhos
+SOURCE = main.cpp utils.cpp interpreter.cpp ast_builder.cpp analisa.cpp validator.cpp gerar_codigo.cpp
+OBJS = $(SOURCE:.cpp=.o)
+HEADER = analisa.h ast_builder.h dicionario.h interpreter.h token.h utils.h validator.h gerar_codigo.h
 
-main.o: main.cpp
-	$(CC) $(FLAGS) main.cpp 
+# Regra padrão (chama tudo)
+all: $(OUT)
 
-analisa.o: analisa.cpp
-	$(CC) $(FLAGS) analisa.cpp 
+# Regra para criar o executável
+$(OUT): $(OBJS)
+	$(CC) $(OBJS) -o $(OUT) $(LFLAGS)
 
-ast_builder.o: ast_builder.cpp
-	$(CC) $(FLAGS) ast_builder.cpp 
+# Regra para compilar arquivos .cpp em .o (sem repetição)
+%.o: %.cpp $(HEADER)
+	$(CC) $(CXXFLAGS) -c $< -o $@
 
-utils.o: utils.cpp
-	$(CC) $(FLAGS) utils.cpp 
-
-interpreter.o: interpreter.cpp
-	$(CC) $(FLAGS) interpreter.cpp
-
+# Limpar arquivos objetos
 clean:
 	rm -f $(OBJS)
+
+# Incluir dependências automáticas (caso haja cabeçalhos)
+-include $(OBJS:.o=.d)

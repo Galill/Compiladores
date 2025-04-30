@@ -1,5 +1,8 @@
 {
     "files.associations": {
+        "*.sqlbook": "sql",
+        "*.ndjson": "jsonl",
+        "*.dbclient-js": "javascript",
         "*.embeddedhtml": "html",
         "ostream": "cpp",
         "xstring": "cpp",
@@ -61,6 +64,7 @@
         "list": "cpp",
         "sstream": "cpp",
         "unordered_map": "cpp",
-        "xhash": "cpp"
+        "xhash": "cpp",
+        "set": "cpp"
     }
 }

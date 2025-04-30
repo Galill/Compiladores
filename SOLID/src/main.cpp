@@ -59,22 +59,11 @@ int main(int argc, char **argv) {
         if (ast) {
             map<string, int> ambiente;
 
-            // Executa todas as declarações
-            for (const auto& declaracao : ast->filhos) {
-                if (declaracao->tipo == "Declaracao") {
-                    int valor = interpretar(declaracao->esquerda, ambiente);
-                    ambiente[declaracao->valor] = valor;
-                    std::cout << declaracao->valor << " = " << valor << std::endl;
-                }
-            }
-            std::cout << "Arvore infixa: ";
-            imprimirInfixo(ast);
-            std::cout << "\n";
-            // Interpreta a expressão final
-            int resultadoFinal = interpretar(ast->esquerda, ambiente);
+
+            // Interpret the entire AST, including declarations and commands
+            int resultadoFinal = interpretar(ast, ambiente);
             std::cout << "Resultado da expressão final: " << resultadoFinal << std::endl;
 
-            // Opcional: gera código assembly
             string codigoGerado = gerar_codigo(ast);
             std::cout << "Código Assembly Gerado:\n" << codigoGerado << std::endl;
         }

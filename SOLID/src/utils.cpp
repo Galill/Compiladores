@@ -47,68 +47,84 @@ void imprimirInfixo(shared_ptr<Node> raiz) {
 
 void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, string> dicionario) {
     int i = 0;
-    string buffer;
     while (i < line.size()) {
-        if (isspace(line[i])) {
-            i++;
+                // Ignorar espaços em branco
+                if (isspace(line[i])) { i++; continue; }
+        
+                // Tratar comentários (opcional)
+                if (line[i] == '/' && i+1 < line.size() && line[i+1] == '/') {
+                    break; // Ignora o resto da linha
+                }
+                
+                // Operadores de dois caracteres (==, <=, >=)
+                if (i+1 < line.size()) {
+                    string doisChars = string(1, line[i]) + line[i+1];
+                    if (doisChars == "==" || doisChars == "<=" || doisChars == ">=") {
+                        auto token = make_shared<Token>();
+                        token->tipo = (doisChars == "==") ? "Igualdade" : "Comparacao";
+                        token->lexema = doisChars;
+                        token->posicao = i;
+                        tokens.push_back(token);
+                        i += 2;
+                        continue;
+                    }
+                }
+        if (isspace(line[i])) { i++; continue; }
+
+        // Operadores de dois caracteres
+        if (line[i] == '=' && i+1 < line.size() && line[i+1] == '=') {
+            auto token = make_shared<Token>();
+            token->tipo = "Igualdade";
+            token->lexema = "==";
+            token->posicao = i;
+            tokens.push_back(token);
+            i += 2;
             continue;
         }
 
-        // Processar números
+        // Palavras-chave
+        if (isalpha(line[i])) {
+            string ident;
+            while (i < line.size() && isalnum(line[i])) ident += line[i++];
+            auto token = make_shared<Token>();
+            token->lexema = ident;
+            token->posicao = i - ident.size();
+            if (ident == "if" || ident == "else" || ident == "while" || ident == "return")
+                token->tipo = "PalavraChave";
+            else
+                token->tipo = "Identificador";
+            tokens.push_back(token);
+            continue;
+        }
+
+        // Números
         if (isdigit(line[i])) {
-            string numeroBuffer;
-            while (i < line.size() && isdigit(line[i])) {
-                numeroBuffer += line[i];
-                i++;
-            }
-            // Verificar se o próximo caractere é uma letra (erro léxico)
-            if (i < line.size() && isalpha(line[i])) {
-                throw runtime_error("Erro léxico: número seguido de letra sem operador.");
-            }
+            string num;
+            while (i < line.size() && isdigit(line[i])) num += line[i++];
             auto token = make_shared<Token>();
             token->tipo = "Numero";
-            token->lexema = numeroBuffer;
-            token->posicao = i - numeroBuffer.size();
+            token->lexema = num;
+            token->posicao = i - num.size();
             tokens.push_back(token);
+            continue;
         }
-        // Processar identificadores
-        else if (isalpha(line[i])) {
-            string identBuffer;
-            while (i < line.size() && isalnum(line[i])) {
-                identBuffer += line[i];
-                i++;
-            }
-            auto token = make_shared<Token>();
-            token->tipo = "Identificador";
-            token->lexema = identBuffer;
-            token->posicao = i - identBuffer.size();
-            tokens.push_back(token);
-        }
-        // Processar símbolos
-        else {
-            string s(1, line[i]);
-            if (dicionario.count(s)) {
-                auto token = make_shared<Token>();
-                token->tipo = dicionario[s];
-                token->lexema = s;
-                token->posicao = i;
-                tokens.push_back(token);
-            }else if (s == "=") {
-                auto token = make_shared<Token>();
-                token->tipo = "Atribuicao"; // ✅ Tipo correto para o '=' final
-                token->lexema = s;
-                token->posicao = i;
-                tokens.push_back(token);
-            }else if (s == ";") {
-                auto token = make_shared<Token>();
-                token->tipo = "PontoVirgula";
-                token->lexema = s;
-                token->posicao = i;
-                tokens.push_back(token);
-            } else {
-                throw runtime_error("Erro léxico: caractere inválido '" + s + "'.");
-            }
-            i++;
-        }
+
+        // Caracteres individuais
+        string s(1, line[i]);
+        auto token = make_shared<Token>();
+        token->lexema = s;
+        token->posicao = i;
+
+        if (s == "{") token->tipo = "ChaveEsq";
+        else if (s == "}") token->tipo = "ChaveDir";
+        else if (s == "=") token->tipo = "Atribuicao";
+        else if (s == ";") token->tipo = "PontoVirgula";
+        else if (s == "<") token->tipo = "Menor";
+        else if (s == ">") token->tipo = "Maior";
+        else if (dicionario.count(s)) token->tipo = dicionario[s];
+        else throw runtime_error("Caractere inválido: " + s);
+
+        tokens.push_back(token);
+        i++;
     }
 }

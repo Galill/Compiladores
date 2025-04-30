@@ -6,6 +6,6 @@
 using std::shared_ptr;
 using std::map;
 
-int interpretar(shared_ptr<Node> raiz, const map<string, int>& ambiente);
+int interpretar(shared_ptr<Node> raiz, map<string, int>& ambiente); 
 
 #endif

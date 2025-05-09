@@ -13,160 +13,208 @@ shared_ptr<Node> ASTBuilder::build(const vector<shared_ptr<Token>> &tokens) {
     symbolTable.clear();
     return parseProgramaFun(tokens, pos);
 }
-
-shared_ptr<Node> ASTBuilder::parseProgramaFun(const vector<shared_ptr<Token>> &tokens, int &pos) {
-    map<string, shared_ptr<Node>> funcoes;
-
-    // 1) Define todas as funções 'fun ...'
-    while (pos < tokens.size() && tokens[pos]->lexema == "fun") {
-        auto func = parseFuncDecl(tokens, pos);
-        string nome = func->valor;
-        if (funcoes.count(nome)) {
-            throw runtime_error("Erro: função '" + nome + "' já foi definida.");
-        }
-        funcoes[nome] = func;
-    }
-
-    // 2) Agora espera-se o bloco 'main { ... }'
-    if (pos >= tokens.size() || tokens[pos]->lexema != "main") {
-        throw runtime_error("Erro: esperado 'main' após declarações de função.");
-    }
-    pos++; // consome 'main'
-    if (tokens[pos]->lexema != "{") {
-        throw runtime_error("Erro: esperado '{' após 'main'.");
-    }
-    pos++; // consome '{'
-
-    // Parseia corpo de main (mesma lógica de parseFuncDecl, mas sem var-decls de Fun)
-    vector<shared_ptr<Node>> comandos;
-    while (tokens[pos]->lexema != "return") {
+   
+    shared_ptr<Node> ASTBuilder::parseProgramaFun(const vector<shared_ptr<Token>> &tokens, int &pos) {
+     map<string, shared_ptr<Node>> funcoes;
+    
+     while (pos < tokens.size() && tokens[pos]->lexema == "fun") {
+      auto func = parseFuncDecl(tokens, pos);
+      string nome = func->valor;
+      if (funcoes.count(nome)) {
+       throw runtime_error("Erro: função '" + nome + "' já foi definida.");
+      }
+      funcoes[nome] = func;
+     }
+    
+    
+     if (pos >= tokens.size() || tokens[pos]->lexema != "main") {
+      throw runtime_error("Erro: esperado 'main' após declarações de função.");
+     }
+     pos++; // consome 'main'
+     if (tokens[pos]->lexema != "{") {
+      throw runtime_error("Erro: esperado '{' após 'main'.");
+     }
+     pos++; // consome '{'
+    
+     // Parseia corpo de main
+     vector<shared_ptr<Node>> comandos;
+     // Modifique esta condição do loop while
+     while (pos < tokens.size() && tokens[pos]->tipo != "ChaveDir") {
         comandos.push_back(parseCmd(tokens, pos));
+        if (pos < tokens.size() && tokens[pos]->tipo == "PontoVirgula") {
+            pos++;
+        }
     }
-    pos++; // consome 'return'
-    auto retorno = parseExpCmp(tokens, pos);
-    if (tokens[pos]->lexema != ";") {
-        throw runtime_error("Erro: esperado ';' após return em main.");
-    }
-    pos++; // consome ';'
 
-    // Monta e adiciona nó de retorno em main
-    auto retNode = make_shared<Node>("Retorno", "return");
-    retNode->esquerda = retorno;
-    comandos.push_back(retNode);
-
-    if (tokens[pos]->lexema != "}") {
-        throw runtime_error("Erro: esperado '}' ao final de main.");
+    if (pos >= tokens.size() || tokens[pos]->tipo != "ChaveDir") {
+        throw runtime_error("Erro: esperado '}' no fim da função.");
     }
     pos++;
-
-    // Monta o nó main como se fosse uma Funcao
-    auto mainNode = make_shared<Node>("Funcao", "main");
-    mainNode->comandos = comandos;
-    // armazenamos também a expressão de retorno para geração de código
-    mainNode->esquerda = nullptr; // deixamos nullptr pois usamos comandos
-    funcoes["main"] = mainNode;
-
-    // Construção do programa
-    auto programa = make_shared<Node>("Programa", "Raiz");
-    for (auto &p : funcoes) {
-        programa->filhos.push_back(p.second);
+     
+     // Se o loop terminou porque encontrou 'return', parseie o retorno
+     if (tokens[pos-1]->lexema == "return") {
+      auto retorno = parseExpCmp(tokens, pos);
+      if (tokens[pos]->lexema != ";") {
+       throw runtime_error("Erro: esperado ';' após return em main.");
+      }
+      pos++; // consome ';'
+    
+      // Monta e adiciona nó de retorno em main
+      auto retNode = make_shared<Node>("Retorno", "return");
+      retNode->esquerda = retorno;
+      comandos.push_back(retNode);
+     }
+    
+     if (tokens[pos]->lexema != "}") {
+      throw runtime_error("Erro: esperado '}' ao final de main.");
+     }
+     pos++;
+    
+     // Monta o nó main como se fosse uma Funcao
+     auto mainNode = make_shared<Node>("Funcao", "main");
+     mainNode->comandos = comandos;
+     // armazenamos também a expressão de retorno para geração de código
+     mainNode->esquerda = nullptr; // deixamos nullptr pois usamos comandos
+     funcoes["main"] = mainNode;
+    
+     // Construção do programa
+     auto programa = make_shared<Node>("Programa", "Raiz");
+     for (auto &p : funcoes) {
+      programa->filhos.push_back(p.second);
+     }
+     funcoesDeclaradas = funcoes;
+     return programa;
     }
-    funcoesDeclaradas = funcoes;
-    return programa;
-}
 
 
-shared_ptr<Node> ASTBuilder::parseFuncDecl(const vector<shared_ptr<Token>> &tokens, int &pos){
-    vector<shared_ptr<Node>> comandos;    
-    // consome 'fun'
-    pos++;
-    // nome da função
-    string nomeFunc = tokens[pos]->lexema;
-    pos++;
+    shared_ptr<Node> ASTBuilder::parseFuncDecl(const std::vector<std::shared_ptr<Token>>& tokens, int& pos) {
+        std::vector<std::shared_ptr<Node>> comandos;
 
-    // abre parênteses de parâmetros
-    pos++; // consome '('
-
-    // ======== 1) PARÂMETROS =========
-    vector<shared_ptr<Node>> parametros;
-    while (tokens[pos]->lexema != ")") {
-        // cada parâmetro é identificador
-        string nomeParam = tokens[pos]->lexema;
-        auto paramNode = make_shared<Node>("Parametro", nomeParam);
-        parametros.push_back(paramNode);
-        // <<< aqui inserimos o parâmetro na tabela !!!
-        symbolTable.insert(nomeParam);
-
-        pos++; // consome o identificador
-        if (tokens[pos]->lexema == ",") pos++; // consome vírgula
-    }
-    pos++; // consome ')'
-
-    // abre chaves do corpo
-    pos++; // consome '{'
-
-    // ======== 2) VARIÁVEIS LOCAIS =========
-    vector<string> locals;
-    while (tokens[pos]->lexema == "var") {
-        pos++; // consome 'var'
-        string varName = tokens[pos]->lexema;
+        // consome 'fun'
+        pos++;
+        if (pos >= tokens.size() || tokens[pos]->tipo != "Identificador") {
+            throw std::runtime_error("Erro: esperado nome da função após 'fun'.");
+        }
+        // nome da função
+        std::string nomeFunc = tokens[pos]->lexema;
         pos++;
 
-        // insere local na tabela antes de parsear o inicializador
-        symbolTable.insert(varName);
-        locals.push_back(varName);
+        // abre parênteses de parâmetros
+        if (pos >= tokens.size() || tokens[pos]->lexema != "(") {
+            throw std::runtime_error("Erro: esperado '(' após o nome da função.");
+        }
+        pos++; // consome '('
 
-        // inicializador
-        pos++; // consome '='
-        auto init = parseExpCmp(tokens, pos);
+        // ======== 1) PARÂMETROS =========
+        std::vector<std::shared_ptr<Node>> parametros;
+        while (pos < tokens.size() && tokens[pos]->lexema != ")") {
+            if (tokens[pos]->tipo != "Identificador") {
+                throw std::runtime_error("Erro: esperado identificador como parâmetro.");
+            }
+            std::string nomeParam = tokens[pos]->lexema;
+            auto paramNode = std::make_shared<Node>("Parametro", nomeParam);
+            parametros.push_back(paramNode);
+            // <<< aqui inserimos o parâmetro na tabela !!!
+            symbolTable.insert(nomeParam);
+            pos++; // consome o identificador
 
-        if (tokens[pos]->lexema != ";")
-            throw runtime_error("Erro: esperado ';' após declaração de variável local.");
-        pos++; // consome ';'
+            if (pos < tokens.size() && tokens[pos]->lexema == ",") {
+                pos++; // consome vírgula
+                if (pos < tokens.size() && tokens[pos]->lexema == ")") {
+                    throw std::runtime_error("Erro: vírgula extra antes de ')'.");
+                }
+            } else if (pos < tokens.size() && tokens[pos]->lexema != ")") {
+                throw std::runtime_error("Erro: esperado ',' ou ')' após parâmetro.");
+            }
+        }
+        if (pos >= tokens.size() || tokens[pos]->lexema != ")") {
+            throw std::runtime_error("Erro: esperado ')' após a lista de parâmetros.");
+        }
+        pos++; // consome ')'
 
-        // cria nó de declaração e guarda em comandos
-        auto declNode = make_shared<Node>("Declaracao", varName);
-        declNode->esquerda = init;
-        comandos.push_back(declNode);
-    }
+        // abre chaves do corpo
+        if (pos >= tokens.size() || tokens[pos]->lexema != "{") {
+            throw std::runtime_error("Erro: esperado '{' após a lista de parâmetros.");
+        }
+        pos++; // consome '{'
 
-    // ======== 3) COMANDOS DO CORPO =========
-    
-    while (tokens[pos]->lexema != "return") {
-        comandos.push_back(parseCmd(tokens, pos));
-    }
+        // ======== 2) VARIÁVEIS LOCAIS =========
+        std::vector<std::string> locals;
+        while (pos < tokens.size() && tokens[pos]->lexema == "var") {
+            pos++; // consome 'var'
+            if (pos >= tokens.size() || tokens[pos]->tipo != "Identificador") {
+                throw std::runtime_error("Erro: esperado nome da variável local após 'var'.");
+            }
+            std::string varName = tokens[pos]->lexema;
+            pos++;
 
-    // return expr ;
-    pos++; // consome 'return'
-    auto retorno = parseExpCmp(tokens, pos);
-    if (tokens[pos]->lexema != ";")
-        throw runtime_error("Erro: esperado ';' após return.");
-    pos++; // consome ';'
+            // insere local na tabela antes de parsear o inicializador
+            symbolTable.insert(varName);
+            locals.push_back(varName);
 
-    // fecha chaves da função
-    if (tokens[pos]->lexema != "}")
-        throw runtime_error("Erro: esperado '}' no fim da função.");
-    pos++;
+            if (pos >= tokens.size() || tokens[pos]->lexema != "=") {
+                throw std::runtime_error("Erro: esperado '=' após o nome da variável local.");
+            }
+            pos++; // consome '='
+            auto init = parseExpCmp(tokens, pos);
 
-    // ======== 4) MONTA O NÓ FUNÇÃO =========
-    auto func = make_shared<Node>("Funcao", nomeFunc);
-    func->filhos   = parametros;
-    func->locais   = locals;
-    func->comandos = comandos;
-    func->esquerda = retorno;
+            if (pos >= tokens.size() || tokens[pos]->lexema != ";") {
+                throw std::runtime_error("Erro: esperado ';' após inicialização da variável local.");
+            }
+            pos++; // consome ';'
 
-    // ======== 5) "Desfaz" o escopo da função =========
-    for (auto &p : parametros)
-        symbolTable.erase(p->valor);
-    for (auto &v : locals)
-        symbolTable.erase(v);
+            // cria nó de declaração e guarda em comandos
+            auto declNode = std::make_shared<Node>("Declaracao", varName);
+            declNode->esquerda = init;
+            comandos.push_back(declNode);
+        }
 
-    return func;
+        // ======== 3) COMANDOS DO CORPO =========
+        while (pos < tokens.size() && tokens[pos]->lexema != "return" && tokens[pos]->lexema != "}") {
+            comandos.push_back(parseCmd(tokens, pos));
+            // O parseCmd já deve consumir o ponto e vírgula se necessário para comandos individuais
+        }
+
+        std::shared_ptr<Node> retorno = nullptr;
+        if (pos < tokens.size() && tokens[pos]->lexema == "return") {
+            pos++; // consome 'return'
+            retorno = parseExpCmp(tokens, pos);
+            if (pos >= tokens.size() || tokens[pos]->lexema != ";") {
+                throw std::runtime_error("Erro: esperado ';' após return.");
+            }
+            pos++; // consome ';'
+        }
+
+        // fecha chaves da função
+        if (pos >= tokens.size() || tokens[pos]->lexema != "}") {
+            throw std::runtime_error("Erro: esperado '}' no fim da função.");
+        }
+        pos++;
+
+        // ======== 4) MONTA O NÓ FUNÇÃO =========
+        auto func = std::make_shared<Node>("Funcao", nomeFunc);
+        func->filhos = parametros;
+        func->locais = locals;
+        func->comandos = comandos;
+        func->esquerda = retorno;
+
+        // ======== 5) "Desfaz" o escopo da função =========
+        for (const auto& p : parametros) {
+            symbolTable.erase(p->valor);
+        }
+        for (const auto& v : locals) {
+            symbolTable.erase(v);
+        }
+
+        return func;
 }
 
 shared_ptr<Node> ASTBuilder::parseVarDecl(const vector<shared_ptr<Token>> &tokens, int &pos) {
+    //std::cout << "Entrou em parseVarDecl na posição: " << pos << ", token: " << tokens[pos]->lexema << std::endl;
     string varName = tokens[pos]->lexema;
     pos++;
+    //std::cout << "Leu nome da variável: " << varName << ", nova posição: " << pos
+              //<< ", próximo token: " << (pos < tokens.size() ? tokens[pos]->lexema : "Fim dos tokens") << std::endl;
 
     if (tokens[pos]->lexema != "=") {
         throw runtime_error("Erro sintático: '=' esperado após identificador.");
@@ -193,59 +241,86 @@ shared_ptr<Node> ASTBuilder::parseVarDecl(const vector<shared_ptr<Token>> &token
 shared_ptr<Node> ASTBuilder::parseCmd(const vector<shared_ptr<Token>> &tokens, int &pos) {
     if (tokens[pos]->lexema == "if") return parseIf(tokens, pos);
     if (tokens[pos]->lexema == "while") return parseWhile(tokens, pos);
+    if (tokens[pos]->lexema == "return") return parseRetorno(tokens, pos);
     if (tokens[pos]->tipo == "Identificador") return parseAtrib(tokens, pos);
-    throw runtime_error("Erro: comando inválido");
+    throw runtime_error("Erro: comando inválido na posição: " + std::to_string(tokens[pos]->posicao) + ", token: " + tokens[pos]->lexema);
 }
+shared_ptr<Node> ASTBuilder::parseRetorno(const vector<shared_ptr<Token>> &tokens, int &pos) {
+    pos++; // Consome o token "return"
 
-shared_ptr<Node> ASTBuilder::parseIf(const vector<shared_ptr<Token>> &tokens, int &pos) {
-    pos++;
-    auto cond = parseExpCmp(tokens, pos);
-
-    if (tokens[pos]->tipo != "ChaveEsq") throw runtime_error("Erro: esperado '{' após if");
-    pos++;
-    vector<shared_ptr<Node>> cmdVerdadeiro;
-    while (tokens[pos]->tipo != "ChaveDir") {
-        cmdVerdadeiro.push_back(parseCmd(tokens, pos));
+    shared_ptr<Node> expr = nullptr;
+    // Verifica se há uma expressão a ser retornada
+    if (pos < tokens.size() && tokens[pos]->lexema != ";") {
+        expr = parseExpCmp(tokens, pos); // Analisa a expressão de retorno usando sua hierarquia
     }
-    pos++;
 
-    if (tokens[pos]->lexema != "else") throw runtime_error("Erro: esperado 'else'");
-    pos++;
-    if (tokens[pos]->tipo != "ChaveEsq") throw runtime_error("Erro: esperado '{' após else");
-    pos++;
-    vector<shared_ptr<Node>> cmdFalso;
-    while (tokens[pos]->tipo != "ChaveDir") {
-        cmdFalso.push_back(parseCmd(tokens, pos));
+    shared_ptr<Node> returnNode = make_shared<Node>("Retorno", "return");
+    returnNode->esquerda = expr; // A expressão de retorno é o filho esquerdo
+    return returnNode;
+}
+std::shared_ptr<Node> ASTBuilder::parseIf(const std::vector<std::shared_ptr<Token>> &tokens, int &pos) {
+    pos++; // Consome "if"
+    auto condicao = parseExpCmp(tokens, pos);
+
+    if (pos >= tokens.size() || tokens[pos]->tipo != "ChaveEsq") {
+        throw std::runtime_error("Erro: esperado '{' após a condição do if.");
     }
-    pos++;
+    std::vector<std::shared_ptr<Node>> blocoIf = parseBloco(tokens, pos);
 
-    auto noIf = make_shared<Node>("If", "if");
-    noIf->esquerda = cond;
-    auto bloco1 = make_shared<Node>("Bloco", "");
-    bloco1->comandos = cmdVerdadeiro;
-    auto bloco2 = make_shared<Node>("Bloco", "");
-    bloco2->comandos = cmdFalso;
-    noIf->filhos.push_back(bloco1);
-    noIf->filhos.push_back(bloco2);
+    std::vector<std::shared_ptr<Node>> blocoElse;
+    if (pos < tokens.size() && tokens[pos]->lexema == "else") {
+        pos++;
+        if (pos >= tokens.size() || tokens[pos]->tipo != "ChaveEsq") {
+            throw std::runtime_error("Erro: esperado '{' após o else.");
+        }
+        blocoElse = parseBloco(tokens, pos);
+    }
+
+    auto noIf = std::make_shared<Node>("If", "if");
+    noIf->esquerda = condicao;
+    auto blocoIfNode = std::make_shared<Node>("Bloco", "");
+    blocoIfNode->comandos = blocoIf;
+    auto blocoElseNode = std::make_shared<Node>("Bloco", "");
+    blocoElseNode->comandos = blocoElse;
+    noIf->filhos.push_back(blocoIfNode);
+    noIf->filhos.push_back(blocoElseNode);
+
     return noIf;
 }
 
-shared_ptr<Node> ASTBuilder::parseWhile(const vector<shared_ptr<Token>> &tokens, int &pos) {
-    pos++;
-    auto cond = parseExpCmp(tokens, pos);
-    if (tokens[pos]->tipo != "ChaveEsq") throw runtime_error("Erro: esperado '{' no while");
-    pos++;
-    vector<shared_ptr<Node>> comandos;
-    while (tokens[pos]->tipo != "ChaveDir") {
+std::vector<std::shared_ptr<Node>> ASTBuilder::parseBloco(const std::vector<std::shared_ptr<Token>> &tokens, int &pos) {
+    std::vector<std::shared_ptr<Node>> comandos;
+    pos++; // Consome a chave de abertura '{'
+
+    while (pos < tokens.size() && tokens[pos]->tipo != "ChaveDir") {
         comandos.push_back(parseCmd(tokens, pos));
+        if (pos < tokens.size() && tokens[pos]->tipo == "PontoVirgula") {
+            pos++;
+        }
     }
-    pos++;
-    auto no = make_shared<Node>("While", "while");
-    no->esquerda = cond;
-    auto bloco = make_shared<Node>("Bloco", "");
-    bloco->comandos = comandos;
-    no->filhos.push_back(bloco);
-    return no;
+
+    if (pos >= tokens.size() || tokens[pos]->tipo != "ChaveDir") {
+        throw std::runtime_error("Erro: esperado '}' no fim do bloco.");
+    }
+    pos++; // Consome a chave de fechamento '}'
+    return comandos;
+}
+std::shared_ptr<Node> ASTBuilder::parseWhile(const std::vector<std::shared_ptr<Token>> &tokens, int &pos) {
+    pos++; // Consome "while"
+    auto condicao = parseExpCmp(tokens, pos);
+
+    if (pos >= tokens.size() || tokens[pos]->tipo != "ChaveEsq") {
+        throw std::runtime_error("Erro: esperado '{' após a condição do while.");
+    }
+    std::vector<std::shared_ptr<Node>> corpoWhile = parseBloco(tokens, pos);
+
+    auto noWhile = std::make_shared<Node>("While", "while");
+    noWhile->esquerda = condicao;
+    auto corpoNode = std::make_shared<Node>("Bloco", "");
+    corpoNode->comandos = corpoWhile;
+    noWhile->filhos.push_back(corpoNode);
+
+    return noWhile;
 }
 
 shared_ptr<Node> ASTBuilder::parseAtrib(const vector<shared_ptr<Token>> &tokens, int &pos) {

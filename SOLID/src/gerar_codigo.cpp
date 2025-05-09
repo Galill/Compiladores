@@ -46,11 +46,9 @@ string gerar_codigo(shared_ptr<Node> ast) {
             stackOff -= 8;
             if (node->valor == "+") out << "    add %rbx, %rax\n";
             else if (node->valor == "-") {
-                out << "    sub %rax, %rbx\n";   
-                out << "    mov %rbx, %rax\n";   
-            }
-        
-            else if (node->valor == "*") out << "    imul %rbx, %rax\n";
+                out << "    sub %rax, %rbx\n";
+                out << "    mov %rbx, %rax\n";
+            } else if (node->valor == "*") out << "    imul %rbx, %rax\n";
             else {
                 out << "    mov %rax, %rcx\n    mov %rbx, %rax\n    xor %rdx, %rdx\n    div %rcx\n";
             }
@@ -82,7 +80,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
 
     // Helper para gerar comandos
     auto gerarCmd = [&](auto&& self, shared_ptr<Node> node, int &stackOff) -> void {
-        if (node->tipo == "Declaracao" || node->tipo == "Atribuicao") {
+        if (node->tipo == "Atribuicao") {
             gerarExp(gerarExp, node->esquerda, stackOff);
             out << "    mov %rax, " << offsets[node->valor] << "(%rbp)\n";
         } else if (node->tipo == "If") {
@@ -118,9 +116,9 @@ string gerar_codigo(shared_ptr<Node> ast) {
         }
     };
 
-    // Geração de funções auxiliares (exclui main)
+    // Geração de funções
     for (auto &decl : ast->filhos) {
-        if ((decl->tipo == "Funcao" || decl->tipo == "Fundecl") && decl->valor != "main") {
+        if ((decl->tipo == "Funcao" || decl->tipo == "Fundecl")) {
             auto gerarFunc = [&](auto&& self, shared_ptr<Node> func) -> void {
                 out << func->valor << ":\n    push %rbp\n    mov %rsp, %rbp\n";
 
@@ -134,48 +132,34 @@ string gerar_codigo(shared_ptr<Node> ast) {
                 if (numLoc > 0) out << "    sub $" << (numLoc * 8) << ", %rsp\n";
 
                 int stackOff = 0;
-                for (auto &cmd : func->comandos)
-                    if (cmd->tipo == "Declaracao") gerarExp(gerarExp, cmd->esquerda, stackOff), out << "    mov %rax, " << offsets[cmd->valor] << "(%rbp)\n";
+                // Lógica para funções com expressão de retorno direta (como 'dobro')
+                if (func->comandos.empty() && func->esquerda) {
+                    gerarExp(gerarExp, func->esquerda, stackOff); // Avalia a expressão de retorno
+                } else {
+                    // Lógica para funções com comandos no corpo
+                    for (auto &cmd : func->comandos) {
+                        if (cmd->tipo == "Declaracao") {
+                            if (cmd->esquerda) {
+                                gerarExp(gerarExp, cmd->esquerda, stackOff);
+                                out << "    mov %rax, " << offsets[cmd->valor] << "(%rbp)\n";
+                            }
+                        } else if (cmd->tipo == "Retorno") {
+                            gerarExp(gerarExp, cmd->esquerda, stackOff);
+                        } else {
+                            gerarCmd(gerarCmd, cmd, stackOff);
+                        }
+                    }
+                }
 
-                bool hasReturn = false;
-                for (auto &cmd : func->comandos) {
-                    if (cmd->tipo == "Retorno") hasReturn = true;
-                    if (cmd->tipo != "Declaracao") gerarCmd(gerarCmd, cmd, stackOff);
-                }
-                if (!hasReturn) {
-                    if (numLoc > 0) out << "    add $" << (numLoc * 8) << ", %rsp\n";
-                    out << "    pop %rbp\n    ret\n";
-                }
+                if (numLoc > 0) out << "    add $" << (numLoc * 8) << ", %rsp\n";
+                out << "    pop %rbp\n    ret\n";
             };
             gerarFunc(gerarFunc, decl);
         }
     }
 
-    // Geração do MAIN
-    auto itMain = std::find_if(ast->filhos.begin(), ast->filhos.end(),
-                                [](auto &d){ return d->valor == "main"; });
-    if (itMain != ast->filhos.end()) {
-        auto &func = *itMain;
-        out << func->valor << ":\n    push %rbp\n    mov %rsp, %rbp\n";
-
-        offsets.clear();
-        int negOffMain = -8;
-        for (auto &v : func->locais) offsets[v] = negOffMain, negOffMain -= 8;
-        int numLocMain = int(func->locais.size());
-        if (numLocMain > 0) out << "    sub $" << (numLocMain * 8) << ", %rsp\n";
-
-        int stackOffMain = 0;
-        for (auto &cmd : func->comandos)
-            if (cmd->tipo == "Declaracao") gerarExp(gerarExp, cmd->esquerda, stackOffMain), out << "    mov %rax, " << offsets[cmd->valor] << "(%rbp)\n";
-        for (auto &cmd : func->comandos)
-            if (cmd->tipo != "Declaracao") gerarCmd(gerarCmd, cmd, stackOffMain);
-
-        if (numLocMain > 0) out << "    add $" << (numLocMain * 8) << ", %rsp\n";
-        out << "    pop %rbp\n    ret\n";
-    }
-
     // Entry point
-    out << "_start:\n    call main      \n    mov %rax, %rdi\n    call imprime_num\n    call sair\n\n.include \"runtime.s\"\n";
+    out << "_start:\n    call main\n    mov %rax, %rdi\n    call imprime_num\n    call sair\n\n.include \"runtime.s\"\n";
 
     return out.str();
 }

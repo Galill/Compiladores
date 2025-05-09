@@ -57,7 +57,8 @@ private:
     shared_ptr<Node> parseIf(const vector<shared_ptr<Token>>& tokens, int& pos);
     shared_ptr<Node> parseWhile(const vector<shared_ptr<Token>>& tokens, int& pos);
     shared_ptr<Node> parseAtrib(const vector<shared_ptr<Token>>& tokens, int& pos);
-
+    shared_ptr<Node> parseRetorno(const vector<shared_ptr<Token>> &tokens, int &pos);
+    std::vector<std::shared_ptr<Node>> parseBloco(const vector<shared_ptr<Token>> &tokens, int &pos);
     // Parsing de expressões, em ordem de precedência
     shared_ptr<Node> parseExpCmp(const vector<shared_ptr<Token>>& tokens, int& pos); // ==, <, >
     shared_ptr<Node> parseExpA(const vector<shared_ptr<Token>>& tokens, int& pos);   // +, -

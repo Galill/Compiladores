@@ -1,11 +1,13 @@
-n = 1;
-soma = 0;
-limite = 5;
-
-{
-  while n < limite {
-    soma = soma + n;
-    n = n + 1;
+fun fib(n) {
+  var res = 0;
+  if n < 2 {
+    res = 1;
+  } else {
+    res = fib(n - 1) + fib(n - 2);
   }
-  return soma;
+  return res;
+}
+
+main {
+  return fib(6);
 }

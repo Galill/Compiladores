@@ -1,13 +1,7 @@
-fun fib(n) {
-  var res = 0;
-  if n < 2 {
-    res = 1;
-  } else {
-    res = fib(n - 1) + fib(n - 2);
-  }
-  return res;
+fun dobro(x) {
+    return x * 2;
 }
-
 main {
-  return fib(6);
+    var a = dobro(10);
+    return a;
 }

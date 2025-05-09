@@ -2,3 +2,4 @@
 *.rar
 /.vscode
 integrantes.txt
+*.o

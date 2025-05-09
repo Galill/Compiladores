@@ -48,11 +48,11 @@ void imprimirInfixo(shared_ptr<Node> raiz) {
 void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, string> dicionario) {
     int i = 0;
     while (i < line.size()) {
-                if (isspace(line[i])) { i++; continue; }
-        
-                if (line[i] == '/' && i+1 < line.size() && line[i+1] == '/') {
-                    break;
-                }
+        if (isspace(line[i]) || line[i] == '\r') { i++; continue; }
+
+        if (line[i] == '/' && i+1 < line.size() && line[i+1] == '/') {
+            break;
+        }
                 if (i+1 < line.size()) {
                     string doisChars = string(1, line[i]) + line[i+1];
                     if (doisChars == "==" || doisChars == "<=" || doisChars == ">=") {
@@ -74,6 +74,32 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
             token->posicao = i;
             tokens.push_back(token);
             i += 2;
+            continue;
+        }
+        if (line[i] == ',') {
+            auto token = make_shared<Token>();
+            token->tipo = "Virgula";
+            token->lexema = ",";
+            token->posicao = i++;
+            tokens.push_back(token);
+            continue;
+        }
+
+        if (line[i] == '(') {
+            auto token = make_shared<Token>();
+            token->tipo = "ParenteseEsq";
+            token->lexema = "(";
+            token->posicao = i++;
+            tokens.push_back(token);
+            continue;
+        }
+
+        if (line[i] == ')') {
+            auto token = make_shared<Token>();
+            token->tipo = "ParenteseDir";
+            token->lexema = ")";
+            token->posicao = i++;
+            tokens.push_back(token);
             continue;
         }
 
@@ -118,5 +144,11 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
 
         tokens.push_back(token);
         i++;
+
     }
+    std::cout <<"tokens: \n";
+    for(auto &tokens: tokens){  
+        std::cout << tokens->lexema << "\t" << std::to_string(tokens->posicao)<< "\t" << tokens->tipo <<"\n\n";
+    }
+    std::cout << "fim \n";
 }

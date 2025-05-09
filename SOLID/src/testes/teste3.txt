@@ -1,13 +1,11 @@
-x = 2;
-y = 3;
-z = 4;
+fun dobro(x) {
+    return x * 2;
+}
 
-{
-  x = x * (y + z);
-  if x == 20 {
-    y = y + 1;
-  } else {
-    y = y - 1;
-  }
-  return x - y;
+fun quadruplo(y) {
+    return dobro(dobro(y));
+}
+
+main {
+    return quadruplo(3);
 }

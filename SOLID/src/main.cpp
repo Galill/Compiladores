@@ -64,11 +64,16 @@ int main(int argc, char **argv) {
 
             string codigoGerado = gerar_codigo(ast);
             std::cout << "Código Assembly Gerado:\n" << codigoGerado << std::endl;
-        }
-    } catch (const std::runtime_error& e) {
+            std::ofstream arquivoSaida("saida.s");
+        if (arquivoSaida.is_open()) {
+            arquivoSaida << codigoGerado;
+            arquivoSaida.close();
+            std::cout << "Código Assembly gerado e escrito em: " << "saida.s" << std::endl;
+        } 
+    }
+    }catch (const std::runtime_error& e) {
         std::cerr << "Erro na interpretação: " << e.what() << std::endl;
         return 1;
     }
-
     return 0;
 }

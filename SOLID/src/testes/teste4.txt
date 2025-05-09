@@ -1,21 +1,6 @@
-a = 10;
-b = 20;
-c = 30;
-max = 0;
-
-{
-  if a > b {
-    if a > c {
-       max = a;
-    } else {
-       max = c;
-    }
-  } else {
-    if b > c {
-      max = b;
-    } else {
-      max = c;
-    }
+fun maior(a, b) {
+  return a > b;
   }
-  return max;
+main {
+  return maior(7, 5);
 }

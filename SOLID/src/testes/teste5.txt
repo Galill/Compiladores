@@ -1,11 +1,7 @@
-fun fatorial(n) {
-    if n == 0 {
-        return 1;
-    } else {
-        return n * fatorial(n - 1);
-    }
+fun retorna10() {
+    return 10;
 }
 
 main {
-    return fatorial(5);
+    return retorna10();
 }

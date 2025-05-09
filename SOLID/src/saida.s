@@ -1,60 +1,17 @@
-.section .bss
-.section .text
-.globl _start
+.section .bss     
+.section .text    
+.globl _start     
 
-fib:
-    push %rbp
+main:
+    push %rbp     
     mov %rsp, %rbp
-    sub $8, %rsp
-    mov $0, %rax
-    mov %rax, -8(%rbp)
-    mov 16(%rbp), %rax
-    push %rax
-    mov $2, %rax
-    pop %rbx
-    cmp %rax, %rbx
-    mov $0, %rbx
-    setl %bl
-    movzbq %bl, %rax
-    cmp $0, %rax
-    je .LELSE0
-    mov $1, %rax
-    mov %rax, -8(%rbp)
-    jmp .LEND0
-.LELSE0:
-    mov 16(%rbp), %rax
-    push %rax
-    mov $1, %rax
-    pop %rbx
-    sub %rax, %rbx
-    mov %rbx, %rax
-    push %rax
-    call fib
-    add $8, %rsp
-    push %rax
-    mov 16(%rbp), %rax
-    push %rax
-    mov $2, %rax
-    pop %rbx
-    sub %rax, %rbx
-    mov %rbx, %rax
-    push %rax
-    call fib
-    add $8, %rsp
-    pop %rbx
-    add %rbx, %rax
-    mov %rax, -8(%rbp)
-.LEND0:
-    add $8, %rsp
+    call retorna10
     pop %rbp
     ret
-main:
+retorna10:
     push %rbp
     mov %rsp, %rbp
-    mov $6, %rax
-    push %rax
-    call fib
-    add $8, %rsp
+    mov $10, %rax
     pop %rbp
     ret
 _start:

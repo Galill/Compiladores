@@ -53,7 +53,6 @@ int interpretarChamada(shared_ptr<Node> chamada, map<string, int>& ambiente) {
         return interpretar(func->esquerda, escopoLocal);
     }
 
-    // Por padrão, retorna 0
     return 0;
 }
 

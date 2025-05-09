@@ -31,7 +31,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
     // Offsets para variáveis locais/parâmetros
     map<string,int> offsets;
 
-    // Helper para gerar expressões
+    
     auto gerarExp = [&](auto&& self, shared_ptr<Node> node, int &stackOff) -> void {
         if (node->tipo == "Numero") {
             out << "    mov $" << node->valor << ", %rax\n";
@@ -132,7 +132,7 @@ string gerar_codigo(shared_ptr<Node> ast) {
                 if (numLoc > 0) out << "    sub $" << (numLoc * 8) << ", %rsp\n";
 
                 int stackOff = 0;
-                // Lógica para funções com expressão de retorno direta (como 'dobro')
+                // Lógica para funções com expressão de retorno direta
                 if (func->comandos.empty() && func->esquerda) {
                     gerarExp(gerarExp, func->esquerda, stackOff); // Avalia a expressão de retorno
                 } else {

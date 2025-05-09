@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             std::cout << "Código Assembly Gerado:\n" << codigoGerado << std::endl;
         }
     } catch (const std::runtime_error& e) {
-        std::cerr << "Erro na análise/interpretação: " << e.what() << std::endl;
+        std::cerr << "Erro na interpretação: " << e.what() << std::endl;
         return 1;
     }
 

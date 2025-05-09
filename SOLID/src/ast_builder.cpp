@@ -11,66 +11,153 @@ using std::string;
 shared_ptr<Node> ASTBuilder::build(const vector<shared_ptr<Token>> &tokens) {
     int pos = 0;
     symbolTable.clear();
-    return parseProgramaCmd(tokens, pos);
+    return parseProgramaFun(tokens, pos);
 }
 
-shared_ptr<Node> ASTBuilder::parseProgramaCmd(const vector<shared_ptr<Token>> &tokens, int &pos) {
-    vector<shared_ptr<Node>> declaracoes;
-    bool inBlock = false;
+shared_ptr<Node> ASTBuilder::parseProgramaFun(const vector<shared_ptr<Token>> &tokens, int &pos) {
+    map<string, shared_ptr<Node>> funcoes;
 
-    while (pos < tokens.size()) {
-        if (tokens[pos]->tipo == "ChaveEsq") {
-            inBlock = true;
-            pos++;
-            break;
+    // 1) Define todas as funções 'fun ...'
+    while (pos < tokens.size() && tokens[pos]->lexema == "fun") {
+        auto func = parseFuncDecl(tokens, pos);
+        string nome = func->valor;
+        if (funcoes.count(nome)) {
+            throw runtime_error("Erro: função '" + nome + "' já foi definida.");
         }
-        if (tokens[pos]->tipo != "Identificador") {
-            throw runtime_error("Erro: esperado declaração ou '{' para iniciar bloco principal.");
-        }
-        auto decl = parseDeclaracao(tokens, pos);
-        declaracoes.push_back(decl);
-        
-        if (decl->tipo == "Declaracao") {
-            symbolTable.insert(decl->valor);
-        }
+        funcoes[nome] = func;
     }
 
-    if (!inBlock) {
-        throw runtime_error("Erro: bloco principal faltando.");
+    // 2) Agora espera-se o bloco 'main { ... }'
+    if (pos >= tokens.size() || tokens[pos]->lexema != "main") {
+        throw runtime_error("Erro: esperado 'main' após declarações de função.");
     }
+    pos++; // consome 'main'
+    if (tokens[pos]->lexema != "{") {
+        throw runtime_error("Erro: esperado '{' após 'main'.");
+    }
+    pos++; // consome '{'
 
+    // Parseia corpo de main (mesma lógica de parseFuncDecl, mas sem var-decls de Fun)
     vector<shared_ptr<Node>> comandos;
     while (tokens[pos]->lexema != "return") {
-        auto cmd = parseCmd(tokens, pos);
-        comandos.push_back(cmd);
+        comandos.push_back(parseCmd(tokens, pos));
     }
-
-    if (tokens[pos]->lexema != "return") {
-        throw runtime_error("Erro: esperado 'return' antes da expressão final.");
+    pos++; // consome 'return'
+    auto retorno = parseExpCmp(tokens, pos);
+    if (tokens[pos]->lexema != ";") {
+        throw runtime_error("Erro: esperado ';' após return em main.");
     }
     pos++;
-    auto expr = parseExpCmp(tokens, pos);
-
-    if (tokens[pos]->tipo != "PontoVirgula") {
-        throw runtime_error("Erro: esperado ';' após expressão de retorno.");
+    if (tokens[pos]->lexema != "}") {
+        throw runtime_error("Erro: esperado '}' ao final de main.");
     }
     pos++;
 
-    if (tokens[pos]->tipo != "ChaveDir") {
-        throw runtime_error("Erro: esperado '}' ao final do bloco.");
-    }
-    pos++;
+    // Monta o nó main como se fosse uma Funcao
+    auto mainNode = make_shared<Node>("Funcao", "main");
+    mainNode->comandos = comandos;
+    mainNode->esquerda = retorno;
+    funcoes["main"] = mainNode;
 
-    auto bloco = make_shared<Node>("Bloco", "");
-    bloco->filhos = declaracoes;
-    bloco->comandos = comandos;
-    bloco->esquerda = expr;
-    bloco->symbolTable = symbolTable; 
-    
-    return bloco;
+    // Construção do programa
+    auto programa = make_shared<Node>("Programa", "Raiz");
+    for (auto &p : funcoes) {
+        programa->filhos.push_back(p.second);
+    }
+    funcoesDeclaradas = funcoes;
+    return programa;
 }
 
-shared_ptr<Node> ASTBuilder::parseDeclaracao(const vector<shared_ptr<Token>> &tokens, int &pos) {
+
+shared_ptr<Node> ASTBuilder::parseFuncDecl(const vector<shared_ptr<Token>> &tokens, int &pos){
+    vector<shared_ptr<Node>> comandos;    
+    // consome 'fun'
+    pos++;
+    // nome da função
+    string nomeFunc = tokens[pos]->lexema;
+    pos++;
+
+    // abre parênteses de parâmetros
+    pos++; // consome '('
+
+    // ======== 1) PARÂMETROS =========
+    vector<shared_ptr<Node>> parametros;
+    while (tokens[pos]->lexema != ")") {
+        // cada parâmetro é identificador
+        string nomeParam = tokens[pos]->lexema;
+        auto paramNode = make_shared<Node>("Parametro", nomeParam);
+        parametros.push_back(paramNode);
+        // <<< aqui inserimos o parâmetro na tabela !!!
+        symbolTable.insert(nomeParam);
+
+        pos++; // consome o identificador
+        if (tokens[pos]->lexema == ",") pos++; // consome vírgula
+    }
+    pos++; // consome ')'
+
+    // abre chaves do corpo
+    pos++; // consome '{'
+
+    // ======== 2) VARIÁVEIS LOCAIS =========
+    vector<string> locals;
+    while (tokens[pos]->lexema == "var") {
+        pos++; // consome 'var'
+        string varName = tokens[pos]->lexema;
+        pos++;
+
+        // insere local na tabela antes de parsear o inicializador
+        symbolTable.insert(varName);
+        locals.push_back(varName);
+
+        // inicializador
+        pos++; // consome '='
+        auto init = parseExpCmp(tokens, pos);
+
+        if (tokens[pos]->lexema != ";")
+            throw runtime_error("Erro: esperado ';' após declaração de variável local.");
+        pos++; // consome ';'
+
+        // cria nó de declaração e guarda em comandos
+        auto declNode = make_shared<Node>("Declaracao", varName);
+        declNode->esquerda = init;
+        comandos.push_back(declNode);
+    }
+
+    // ======== 3) COMANDOS DO CORPO =========
+    
+    while (tokens[pos]->lexema != "return") {
+        comandos.push_back(parseCmd(tokens, pos));
+    }
+
+    // return expr ;
+    pos++; // consome 'return'
+    auto retorno = parseExpCmp(tokens, pos);
+    if (tokens[pos]->lexema != ";")
+        throw runtime_error("Erro: esperado ';' após return.");
+    pos++; // consome ';'
+
+    // fecha chaves da função
+    if (tokens[pos]->lexema != "}")
+        throw runtime_error("Erro: esperado '}' no fim da função.");
+    pos++;
+
+    // ======== 4) MONTA O NÓ FUNÇÃO =========
+    auto func = make_shared<Node>("Funcao", nomeFunc);
+    func->filhos   = parametros;
+    func->locais   = locals;
+    func->comandos = comandos;
+    func->esquerda = retorno;
+
+    // ======== 5) "Desfaz" o escopo da função =========
+    for (auto &p : parametros)
+        symbolTable.erase(p->valor);
+    for (auto &v : locals)
+        symbolTable.erase(v);
+
+    return func;
+}
+
+shared_ptr<Node> ASTBuilder::parseVarDecl(const vector<shared_ptr<Token>> &tokens, int &pos) {
     string varName = tokens[pos]->lexema;
     pos++;
 
@@ -223,14 +310,38 @@ shared_ptr<Node> ASTBuilder::parsePrim(const vector<shared_ptr<Token>> &tokens, 
     }
 
     if (tokens[pos]->tipo == "Identificador") {
-        string varName = tokens[pos]->lexema;
-        if (!symbolTable.count(varName)) {
-            throw runtime_error("Erro semântico: variável '" + varName + "' não declarada (posição " + 
-                              std::to_string(tokens[pos]->posicao) + ").");
-        }
-        auto node = make_shared<Node>("Variavel", varName);
+        string nome = tokens[pos]->lexema;
         pos++;
-        return node;
+    
+        // Verifica se é chamada de função
+        if (pos < tokens.size() && tokens[pos]->lexema == "(") {
+            pos++; // consome '('
+            vector<shared_ptr<Node>> args;
+    
+            if (tokens[pos]->lexema != ")") {
+                while (true) {
+                    auto arg = parseExpCmp(tokens, pos); // os argumentos podem ser expressões completas
+                    args.push_back(arg);
+    
+                    if (tokens[pos]->lexema == ")") break;
+                    if (tokens[pos]->lexema != ",") {
+                        throw runtime_error("Erro: esperado ',' entre argumentos.");
+                    }
+                    pos++; // consome ','
+                }
+            }
+            pos++; // consome ')'
+    
+            auto chamada = make_shared<Node>("Chamada", nome);
+            chamada->filhos = args;
+            return chamada;
+        }
+    
+        // Caso contrário, é uma variável
+        if (!symbolTable.count(nome)) {
+            throw runtime_error("Erro semântico: variável '" + nome + "' não declarada.");
+        }
+        return make_shared<Node>("Variavel", nome);
     }
 
     if (tokens[pos]->tipo == "Numero") {

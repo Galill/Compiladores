@@ -1,130 +1,193 @@
 #include "../include/gerar_codigo.h"
-#include "../include/token.h"
+#include <sstream>
+#include <map>
 #include <string>
 #include <functional>
-#include <sstream>
-#include <stdexcept>
-#include <iostream> 
-#include <set> 
 
 using std::string;
-using std::shared_ptr;
-using std::function;
 using std::stringstream;
-using std::runtime_error;
-using std::cerr;
-using std::endl;
-using std::set;
+using std::shared_ptr;
+using std::map;
+using std::vector;
 
 int labelCounter = 0;
 
 string gerar_codigo(shared_ptr<Node> ast) {
-    if (!ast || ast->tipo != "Bloco") return "";
+    if (!ast || ast->tipo != "Programa") return "";
 
-    stringstream bss;
-    stringstream code;
-    bss << ".section .bss\n";
-    code << ".section .text\n.globl _start\n_start:\n";
+    stringstream out;
+    // Seção de dados para variáveis globais
+    out << ".section .bss\n";
+    for (auto &decl : ast->filhos) {
+        if (decl->tipo == "Declaracao") {
+            out << "    .lcomm " << decl->valor << ", 8\n";
+        }
+    }
 
-    set<string> declaredVars; 
+    // Seção de texto
+    out << ".section .text\n";
+    out << "\n.globl _start\n";
 
-    function<void(shared_ptr<Node>)> gerarExp;
-    gerarExp = [&](shared_ptr<Node> node) {
-        if (!node) return;
+    // Offset map global (reutilizado nas funções)
+    map<string,int> offsets;
 
+    // Helper para gerar expressões
+    auto gerarExp = [&](auto&& self, shared_ptr<Node> node, int &stackOff) -> void {
         if (node->tipo == "Numero") {
-            code << "    mov $" << node->valor << ", %rax\n";
+            out << "    mov $" << node->valor << ", %rax\n";
         } else if (node->tipo == "Variavel") {
-            if (declaredVars.find(node->valor) == declaredVars.end()) {
-                throw runtime_error("Variável não declarada: " + node->valor);
-            }
-            code << "    mov " << node->valor << ", %rax\n";
+            out << "    mov " << offsets[node->valor] << "(%rbp), %rax\n";
         } else if (node->tipo == "Operador") {
-            gerarExp(node->esquerda);
-            code << "    push %rax\n";
-            gerarExp(node->direita);
-            if (node->valor == "+") {
-                code << "    pop %rbx\n    add %rbx, %rax\n";
-            } else if (node->valor == "-") {
-                code << "    mov %rax, %rbx\n    pop %rax\n    sub %rbx, %rax\n";
-            } else if (node->valor == "*") {
-                code << "    pop %rbx\n    imul %rbx, %rax\n";
-            } else if (node->valor == "/") {
-                code << "    mov %rax, %rbx\n    pop %rax\n    xor %rdx, %rdx\n    idiv %rbx\n";
+            self(self, node->esquerda, stackOff);
+            out << "    push %rax\n";
+            stackOff += 8;
+            self(self, node->direita, stackOff);
+            out << "    pop %rbx\n";
+            stackOff -= 8;
+            if (node->valor == "+")
+                out << "    add %rbx, %rax\n";
+            else if (node->valor == "-")
+                out << "    sub %rbx, %rax\n";
+            else if (node->valor == "*")
+                out << "    imul %rbx, %rax\n";
+            else {
+                out << "    mov %rax, %rcx\n";
+                out << "    mov %rbx, %rax\n";
+                out << "    xor %rdx, %rdx\n";
+                out << "    div %rcx\n";
             }
         } else if (node->tipo == "Comparacao") {
-            gerarExp(node->esquerda);
-            code << "    push %rax\n";
-            gerarExp(node->direita);
-            code << "    pop %rbx\n    xor %rcx, %rcx\n    cmp %rax, %rbx\n";
-            if (node->valor == "==") {
-                code << "    sete %cl\n";
-            } else if (node->valor == "<") {
-                code << "    setl %cl\n";
-            } else if (node->valor == ">") {
-                code << "    setg %cl\n";
+            self(self, node->esquerda, stackOff);
+            out << "    push %rax\n";
+            stackOff += 8;
+            self(self, node->direita, stackOff);
+            out << "    pop %rbx\n";
+            stackOff -= 8;
+            out << "    cmp %rax, %rbx\n";
+            out << "    mov $0, %rbx\n";
+            if (node->valor == "==")
+                out << "    sete %bl\n";
+            else if (node->valor == "<")
+                out << "    setl %bl\n";
+            else
+                out << "    setg %bl\n";
+            out << "    movzbq %bl, %rax\n";
+        } else if (node->tipo == "Chamada") {
+            for (int i = int(node->filhos.size()) - 1; i >= 0; --i) {
+                self(self, node->filhos[i], stackOff);
+                out << "    push %rax\n";
+                stackOff += 8;
             }
-            code << "    movzx %cl, %rax\n";
+            out << "    call " << node->valor << "\n";
+            if (!node->filhos.empty()) {
+                out << "    add $" << (node->filhos.size() * 8) << ", %rsp\n";
+                stackOff -= int(node->filhos.size() * 8);
+            }
         }
     };
 
-    function<void(shared_ptr<Node>)> gerarCmd = [&](shared_ptr<Node> node) {
-        if (!node) return;
-
-        if (node->tipo == "Declaracao") {
-            if (declaredVars.find(node->valor) == declaredVars.end()) {
-                bss << "    .lcomm " << node->valor << ", 8\n";
-                declaredVars.insert(node->valor);
-                gerarExp(node->esquerda);
-                code << "    mov %rax, " << node->valor << "\n"; 
-            } else {
-                throw runtime_error("Variável já declarada: " + node->valor);
-            }
-        } else if (node->tipo == "Atribuicao") {
-            if (declaredVars.find(node->valor) == declaredVars.end()) {
-                throw runtime_error("Atribuição a variável não declarada: " + node->valor);
-            }
-            gerarExp(node->esquerda);
-            code << "    mov %rax, " << node->valor << "\n"; 
+    // Helper para gerar comandos
+    auto gerarCmd = [&](auto&& self, shared_ptr<Node> node, int &stackOff) -> void {
+        if (node->tipo == "Declaracao" || node->tipo == "Atribuicao") {
+            gerarExp(gerarExp, node->esquerda, stackOff);
+            out << "    mov %rax, " << offsets[node->valor] << "(%rbp)\n";
         } else if (node->tipo == "If") {
-            int id = labelCounter++;
-            gerarExp(node->esquerda);
-            code << "    cmp $0, %rax\n    jz Lfalso" << id << "\n"; 
-            for (const auto& cmd : node->filhos[0]->comandos) gerarCmd(cmd);
+            int lbl = labelCounter++;
+            gerarExp(gerarExp, node->esquerda, stackOff);
+            out << "    cmp $0, %rax\n";
+            out << "    je .LELSE" << lbl << "\n";
+            for (auto &c : node->filhos[0]->comandos)
+                self(self, c, stackOff);
+            out << "    jmp .LEND" << lbl << "\n";
+            out << ".LELSE" << lbl << ":\n";
             if (node->filhos.size() > 1) {
-                code << "    jmp Lfim" << id << "\nLfalso" << id << ":\n";
-                for (const auto& cmd : node->filhos[1]->comandos) gerarCmd(cmd);
-                code << "Lfim" << id << ":\n";
-            } else {
-                code << "Lfalso" << id << ":\n";
-                code << "Lfim" << id << ":\n"; 
+                for (auto &c : node->filhos[1]->comandos)
+                    self(self, c, stackOff);
             }
+            out << ".LEND" << lbl << ":\n";
         } else if (node->tipo == "While") {
-            int id = labelCounter++;
-            code << "Linicio" << id << ":\n";
-            gerarExp(node->esquerda);
-            code << "    cmp $0, %rax\n    jz Lfim" << id << "\n"; 
-            for (const auto& cmd : node->filhos[0]->comandos) gerarCmd(cmd);
-            code << "    jmp Linicio" << id << "\nLfim" << id << ":\n";
+            int lbl = labelCounter++;
+            out << ".LLOOP" << lbl << ":\n";
+            gerarExp(gerarExp, node->esquerda, stackOff);
+            out << "    cmp $0, %rax\n";
+            out << "    je .LEXIT" << lbl << "\n";
+            for (auto &c : node->filhos[0]->comandos)
+                self(self, c, stackOff);
+            out << "    jmp .LLOOP" << lbl << "\n";
+            out << ".LEXIT" << lbl << ":\n";
+        } else if (node->tipo == "Retorno") {
+            gerarExp(gerarExp, node->esquerda, stackOff);
+            int totalLocals = int(offsets.size());
+            out << "    add $" << (totalLocals * 8) << ", %rsp\n";
+            out << "    pop %rbp\n";
+            out << "    ret\n";
+        } else if (node->tipo == "Chamada") {
+            for (int i = int(node->filhos.size()) - 1; i >= 0; --i) {
+                gerarExp(gerarExp, node->filhos[i], stackOff);
+                out << "    push %rax\n";
+                stackOff += 8;
+            }
+            out << "    call " << node->valor << "\n";
+            if (!node->filhos.empty()) {
+                out << "    add $" << (node->filhos.size() * 8) << ", %rsp\n";
+                stackOff -= int(node->filhos.size() * 8);
+            }
         }
     };
 
-   
-    for (const auto& decl : ast->filhos) {
-        if (decl->tipo == "Declaracao") {
-            gerarCmd(decl);
+    // Geração de cada função (incluindo main)
+    auto gerarFunc = [&](shared_ptr<Node> func) {
+        out << func->valor << ":\n";
+        out << "    push %rbp\n";
+        out << "    mov %rsp, %rbp\n";
+
+        offsets.clear();
+        for (size_t i = 0; i < func->filhos.size(); ++i)
+            offsets[func->filhos[i]->valor] = 16 + int(i) * 8;
+        int negOff = -8;
+        for (auto &v : func->locais) {
+            offsets[v] = negOff;
+            negOff -= 8;
+        }
+
+        int numLoc = int(func->locais.size());
+        if (numLoc > 0)
+            out << "    sub $" << (numLoc * 8) << ", %rsp\n";
+
+        int stackOff = 0;
+        for (auto &cmd : func->comandos) {
+            if (cmd->tipo == "Declaracao") {
+                gerarExp(gerarExp, cmd->esquerda, stackOff);
+                out << "    mov %rax, " << offsets[cmd->valor] << "(%rbp)\n";
+            }
+        }
+        bool hasReturn = false;
+        for (auto &cmd : func->comandos) {
+            if (cmd->tipo == "Retorno") hasReturn = true;
+            if (cmd->tipo != "Declaracao")
+                gerarCmd(gerarCmd, cmd, stackOff);
+        }
+        if (!hasReturn) {
+            if (numLoc > 0)
+                out << "    add $" << (numLoc * 8) << ", %rsp\n";
+            out << "    pop %rbp\n";
+            out << "    ret\n";
+        }
+    };
+
+    for (auto &decl : ast->filhos) {
+        if (decl->tipo == "Funcao" || decl->tipo == "Fundecl" || decl->valor == "main") {
+            gerarFunc(decl);
         }
     }
 
-    
-    for (const auto& cmd : ast->comandos) {
-        gerarCmd(cmd);
-    }
+    // Ponto de entrada
+    out << "_start:\n";
+    out << "    call main\n";
+    out << "    mov %rax, %rdi\n";
+    out << "    call imprime_num\n";
+    out << "    call sair\n";
+    out << "\n.include \"runtime.s\"\n";
 
-    gerarExp(ast->esquerda); 
-    code << "    call imprime_num\n    call sair\n";
-
-    stringstream final;
-    final << bss.str() << "\n" << code.str() << "\n.include \"runtime.s\"\n";
-    return final.str();
+    return out.str();
 }

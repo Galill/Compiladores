@@ -1,6 +1,6 @@
 
 CC = g++
-CXXFLAGS = -g -Wall -w  
+CXXFLAGS = -g  -Wall -w
 LFLAGS =              
 OUT = compilador      
 

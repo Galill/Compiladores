@@ -146,9 +146,4 @@ void tolkenizer(vector<shared_ptr<Token>> &tokens, string line, map<string, stri
         i++;
 
     }
-    std::cout <<"tokens: \n";
-    for(auto &tokens: tokens){  
-        std::cout << tokens->lexema << "\t" << std::to_string(tokens->posicao)<< "\t" << tokens->tipo <<"\n\n";
-    }
-    std::cout << "fim \n";
 }

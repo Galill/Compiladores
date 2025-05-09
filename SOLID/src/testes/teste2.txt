@@ -1,0 +1,11 @@
+n = 1;
+soma = 0;
+limite = 5;
+
+{
+  while n < limite {
+    soma = soma + n;
+    n = n + 1;
+  }
+  return soma;
+}

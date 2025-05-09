@@ -47,7 +47,13 @@ shared_ptr<Node> ASTBuilder::parseProgramaFun(const vector<shared_ptr<Token>> &t
     if (tokens[pos]->lexema != ";") {
         throw runtime_error("Erro: esperado ';' após return em main.");
     }
-    pos++;
+    pos++; // consome ';'
+
+    // Monta e adiciona nó de retorno em main
+    auto retNode = make_shared<Node>("Retorno", "return");
+    retNode->esquerda = retorno;
+    comandos.push_back(retNode);
+
     if (tokens[pos]->lexema != "}") {
         throw runtime_error("Erro: esperado '}' ao final de main.");
     }
@@ -56,7 +62,8 @@ shared_ptr<Node> ASTBuilder::parseProgramaFun(const vector<shared_ptr<Token>> &t
     // Monta o nó main como se fosse uma Funcao
     auto mainNode = make_shared<Node>("Funcao", "main");
     mainNode->comandos = comandos;
-    mainNode->esquerda = retorno;
+    // armazenamos também a expressão de retorno para geração de código
+    mainNode->esquerda = nullptr; // deixamos nullptr pois usamos comandos
     funcoes["main"] = mainNode;
 
     // Construção do programa

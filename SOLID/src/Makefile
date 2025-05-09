@@ -20,7 +20,6 @@ $(OUT): $(OBJS)
 %.o: %.cpp $(HEADER)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
-
 clean:
 	rm -f $(OBJS)
 
